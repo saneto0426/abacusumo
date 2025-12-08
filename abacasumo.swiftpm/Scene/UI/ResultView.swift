@@ -1,0 +1,7 @@
+//
+//  ResultView.swift
+//  abacasumo
+//
+//  Created by 🐣 on 2025/12/08.
+//
+
