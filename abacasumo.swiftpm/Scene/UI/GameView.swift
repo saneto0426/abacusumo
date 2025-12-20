@@ -7,10 +7,28 @@
 import SwiftUI
 
 struct GameView: View {
-    // --- ロジック（既存のファイルを活用） ---
-    private let generator = SimpleProblemGenerator()
-    private let config = LevelConfig(digits: 2, count: 5, allowSubtraction: true)
+    // ★ ここを追加：親から受け取る設定 ★
+    let mode: GameMode
+    var onBackToTitle: () -> Void
 
+    // モードに合わせて使うジェネレーターを切り替える
+    private var generator: ProblemGeneratable {
+        switch mode {
+        case .addition: return SimpleProblemGenerator()
+        case .multiplication: return MultiProblemGenerator()
+        case .division: return DivProblemGenerator()
+        }
+    }
+    
+    // 桁数の設定（モードごとに変えることも可能です）
+    private var config: LevelConfig {
+        switch mode {
+        case .multiplication, .division:
+            return LevelConfig(digits: 2, count: 2, allowSubtraction: false)
+        default:
+            return LevelConfig(digits: 2, count: 5, allowSubtraction: true)
+        }
+    }
     // --- ゲーム全体の状態 ---
     @State private var gameState: Double = 0.5
     @State private var isGameOver = false
