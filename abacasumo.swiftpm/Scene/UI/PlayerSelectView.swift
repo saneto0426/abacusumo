@@ -13,14 +13,14 @@ struct TitleView: View {
     
     var body: some View {
         VStack(spacing: 40) {
-            Text("そろばんバトル！")
+            Text("abacusmo")
                 .font(.system(size: 40, weight: .black))
                 .padding(.bottom, 50)
             
             VStack(spacing: 20) {
-                modeButton(title: "たしざん・ひきざん", mode: .addition, color: .green)
-                modeButton(title: "かけざん", mode: .multiplication, color: .orange)
-                modeButton(title: "わりざん", mode: .division, color: .blue)
+                modeButton(title: "Mental Arithmetic", mode: .addition, color: .green)
+                modeButton(title: "Multiplication", mode: .multiplication, color: .orange)
+                modeButton(title: "Division", mode: .division, color: .blue)
             }
             .padding(.horizontal, 40)
         }
