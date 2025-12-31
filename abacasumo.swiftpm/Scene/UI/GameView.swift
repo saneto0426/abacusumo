@@ -7,45 +7,34 @@
 import SwiftUI
 
 struct GameView: View {
-    let mode: GameMode
-    var onBackToTitle: () -> Void
-
-    private var generator: ProblemGeneratable {
-        switch mode {
-        case .addition: return SimpleProblemGenerator()
-        case .multiplication: return MultiProblemGenerator()
-        case .division: return DivProblemGenerator()
-        }
-    }
-    
-    private var config: LevelConfig {
-        switch mode {
-        case .multiplication, .division:
-            return LevelConfig(digits: 2, count: 2, allowSubtraction: false)
-        default:
-            return LevelConfig(digits: 2, count: 5, allowSubtraction: true)
-        }
-    }
+    @ObservedObject var ghostManager: GhostManager
+    let config: LevelConfig
+    let ghostToBeat: GhostRecord?
+    var onBack: () -> Void
 
     @State private var gameState: Double = 0.5
     @State private var isGameOver = false
-    @State private var wonGame = false
-    
+    @State private var showResultDialog = false
+
     @State private var currentQuiz: (numbers: [Int], answer: Int) = ([], 0)
     @State private var currentIndex = 0
     @State private var currentDisplayText: String = "準備完了"
     @State private var userInput: String = ""
     @State private var isAnswering = false
-    // ★ 追加：空欄で押した時の確認フラグ ★
     @State private var isSkipConfirmation = false
+
+    @State private var totalPlayTime: TimeInterval = 0
+    @State private var lastProblemStartTime: Date?
+    @State private var solveIntervals: [TimeInterval] = []
+    @State private var ghostSolvedCount = 0
 
     let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
-            BattleBarComponent(value: gameState)
+            // 名前を 'BattleBarComponent' に修正
+            BattleBarComponent(value: gameState, isGhost: ghostToBeat != nil)
                 .padding(.top, 60)
-                .padding(.bottom, 30)
 
             VStack(spacing: 10) {
                 Text(currentDisplayText)
@@ -53,9 +42,7 @@ struct GameView: View {
                     .foregroundColor(isAnswering ? .secondary : .primary)
                 
                 HStack {
-                    Text("入力:")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                    Text("入力:").font(.headline)
                     Text(userInput)
                         .font(.system(size: 45, weight: .bold, design: .monospaced))
                         .frame(minWidth: 120, minHeight: 60)
@@ -65,183 +52,96 @@ struct GameView: View {
             }
             .frame(maxHeight: .infinity)
 
-            // テンキー
-            NumberPad(
-                userInput: $userInput,
-                actionLabel: mainActionLabel,
-                actionColor: mainActionColor
-            ) {
-                handleMainAction()
-            }
-            .onChange(of: userInput) { _ in
-                // 文字が入力されたら確認状態を解除する
-                if !userInput.isEmpty { isSkipConfirmation = false }
-            }
-            .padding(.bottom, 40)
-            .background(Color.gray.opacity(0.05))
-        }
-        .edgesIgnoringSafeArea(.bottom)
-        .onAppear { setupFirstGame() }
-        .onReceive(timer) { _ in updateBar() }
-    }
-
-    // 右下ボタンのラベル
-    var mainActionLabel: String {
-        if isGameOver { return "リトライ" }
-        if isSkipConfirmation { return "スキップ" } // 未入力1回押した後の表示
-        if isAnswering { return "確定" }
-        if currentIndex == 0 { return "開始" }
-        return "次へ"
-    }
-
-    var mainActionColor: Color {
-        if isGameOver { return .blue }
-        if isSkipConfirmation { return .red }
-        if isAnswering { return .orange }
-        return .green
-    }
-
-    // --- ゲームロジック ---
-    
-    func handleMainAction() {
-        if isGameOver {
-            resetGame()
-        } else if isAnswering {
-            if userInput.isEmpty {
-                // ★ 未入力の場合の処理 ★
-                if isSkipConfirmation {
-                    isSkipConfirmation = false
-                    startNextQuiz() // 2回目なので次へ
-                } else {
-                    isSkipConfirmation = true // 1回目：警告状態へ
-                }
+            if showResultDialog {
+                resultDialog
             } else {
-                isSkipConfirmation = false
-                checkAnswer()
+                // NumberPad を呼び出す
+                NumberPad(userInput: $userInput, actionLabel: mainLabel, actionColor: mainColor, onAction: handleMainAction)
+                    .padding(.bottom, 40)
             }
-        } else {
-            nextStep()
+        }
+        .onAppear { setupFirst() }
+        .onReceive(timer) { _ in update() }
+    }
+
+    // --- 以下ロジック (変更なし) ---
+    var generator: ProblemGeneratable {
+        switch config.mode {
+        case .addition: return SimpleProblemGenerator()
+        case .multiplication: return MultiProblemGenerator()
+        case .division: return DivProblemGenerator()
         }
     }
-
-    func setupFirstGame() {
+    
+    func setupFirst() {
         currentQuiz = generator.makeQuiz(config: config)
-        currentIndex = 0
         currentDisplayText = "準備完了"
-        isAnswering = false
-        userInput = ""
-        isSkipConfirmation = false
     }
 
-    func startNextQuiz() {
+    func handleMainAction() {
+        if isAnswering {
+            if userInput.isEmpty {
+                if isSkipConfirmation { startNext() } else { isSkipConfirmation = true }
+            } else { check() }
+        } else { nextStep() }
+    }
+
+    func startNext() {
         currentQuiz = generator.makeQuiz(config: config)
-        currentIndex = 0
-        userInput = ""
-        isAnswering = false
-        isSkipConfirmation = false
+        currentIndex = 0; userInput = ""; isAnswering = false; isSkipConfirmation = false
         nextStep()
     }
 
     func nextStep() {
         if currentIndex < currentQuiz.numbers.count {
-            let num = currentQuiz.numbers[currentIndex]
-            currentDisplayText = "\(num)"
+            currentDisplayText = "\(currentQuiz.numbers[currentIndex])"
             currentIndex += 1
+            if currentIndex == 1 { lastProblemStartTime = Date() }
         } else {
-            currentDisplayText = "？"
-            isAnswering = true
+            currentDisplayText = "？"; isAnswering = true
         }
     }
 
-    func updateBar() {
+    func check() {
+        let interval = Date().timeIntervalSince(lastProblemStartTime ?? Date())
+        solveIntervals.append(interval)
+        if Int(userInput) == currentQuiz.answer { gameState = min(1.0, gameState + 0.12) }
+        if gameState >= 1.0 { finish(won: true) } else { startNext() }
+    }
+
+    func update() {
         guard !isGameOver && currentIndex > 0 else { return }
-        gameState -= 0.002
-        if gameState <= 0 { finishGame(won: false) }
+        totalPlayTime += 0.05
+        gameState -= 0.001
+        if let ghost = ghostToBeat {
+            let ghostTargetTime = ghost.solveIntervals.prefix(ghostSolvedCount + 1).reduce(0, +)
+            if totalPlayTime >= ghostTargetTime && ghostSolvedCount < ghost.solveIntervals.count {
+                gameState -= 0.08
+                ghostSolvedCount += 1
+            }
+        }
+        if gameState <= 0 { finish(won: false) }
     }
 
-    func checkAnswer() {
-        let userAnswerInt = Int(userInput) ?? 0
-        if userAnswerInt == currentQuiz.answer {
-            gameState = min(1.0, gameState + 0.15)
-        }
-        // 不正解でもバーは減らさない（一定の動き）
-
-        if gameState >= 1.0 {
-            finishGame(won: true)
-        } else {
-            startNextQuiz()
-        }
-    }
-
-    func finishGame(won: Bool) {
-        isGameOver = true
-        wonGame = won
+    func finish(won: Bool) {
+        isGameOver = true; showResultDialog = true
         currentDisplayText = won ? "勝ち！" : "負け..."
-        isAnswering = false
     }
 
-    func resetGame() {
-        gameState = 0.5
-        isGameOver = false
-        setupFirstGame()
-    }
-}
-
-// --- 部品 ---
-
-struct NumberPad: View {
-    @Binding var userInput: String
-    let actionLabel: String
-    let actionColor: Color
-    var onAction: () -> Void
-    let rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
-    var body: some View {
-        VStack(spacing: 12) {
-            ForEach(0..<3) { rowIndex in
-                HStack(spacing: 12) {
-                    ForEach(rows[rowIndex], id: \.self) { label in
-                        NumberButton(label: label) { userInput += label }
-                    }
-                }
+    var resultDialog: some View {
+        VStack(spacing: 20) {
+            Text("今回のタイムをゴーストとして保存しますか？")
+            HStack(spacing: 30) {
+                Button("No") { onBack() }
+                Button("Yes") {
+                    let rec = GhostRecord(mode: config.mode, configLabel: config.label, solveIntervals: solveIntervals, date: Date())
+                    ghostManager.saveRecord(rec)
+                    onBack()
+                }.buttonStyle(.borderedProminent)
             }
-            HStack(spacing: 12) {
-                NumberButton(label: "C", color: .red.opacity(0.8)) { userInput = "" }
-                NumberButton(label: "0") { userInput += "0" }
-                Button(action: onAction) {
-                    Text(actionLabel).font(.headline).bold()
-                        .frame(width: 80, height: 60)
-                        .background(actionColor).foregroundColor(.white).cornerRadius(12)
-                }
-            }
-        }
+        }.padding().background(Color.white).cornerRadius(15).shadow(radius: 10).padding()
     }
-}
 
-struct NumberButton: View {
-    let label: String
-    var color: Color = .gray
-    var action: () -> Void
-    var body: some View {
-        Button(action: { if label.count < 6 { action() } }) {
-            Text(label).font(.title2).bold()
-                .frame(width: 80, height: 60)
-                .background(color).foregroundColor(.white).cornerRadius(12)
-        }
-    }
-}
-
-struct BattleBarComponent: View {
-    var value: Double
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.gray.opacity(0.2))
-                Capsule()
-                    .fill(value < 0.3 ? Color.red : (value > 0.7 ? Color.blue : Color.green))
-                    .frame(width: geo.size.width * CGFloat(value))
-                    .animation(.linear, value: value)
-            }
-        }
-        .frame(height: 25).padding(.horizontal)
-    }
+    var mainLabel: String { isSkipConfirmation ? "スキップ" : (isAnswering ? "確定" : (currentIndex == 0 ? "開始" : "次へ")) }
+    var mainColor: Color { isSkipConfirmation ? .red : (isAnswering ? .orange : .green) }
 }

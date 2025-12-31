@@ -17,7 +17,7 @@ struct MyApp: App {
         
         let generator = SimpleProblemGenerator()
         // 2桁、5口、引き算あり
-        let config = LevelConfig(digits: 2, count: 5, allowSubtraction: true)
+        let config = LevelConfig(mode: .addition, digits: 2, count: 5, allowSubtraction: true)
 
         let quiz = generator.makeQuiz(config: config)
 
