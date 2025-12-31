@@ -2,53 +2,50 @@
 
 import SwiftUI
 
+
+enum AppScreen {
+    case title
+    case modeSelect(isGhostMode: Bool)
+    case digitSelect(mode: GameMode)
+    case ghostSelect(mode: GameMode)
+    case game(config: LevelConfig, ghost: GhostRecord?)
+}
+
 struct ContentView: View {
     @StateObject var ghostManager = GhostManager()
-    @State private var selectedConfig: LevelConfig? = nil
-    @State private var selectedGhost: GhostRecord? = nil
+    @State private var currentScreen: AppScreen = .title
 
     var body: some View {
-        if let config = selectedConfig {
-            GameView(ghostManager: ghostManager, config: config, ghostToBeat: selectedGhost) {
-                selectedConfig = nil
-                selectedGhost = nil
-            }
-        } else {
-            NavigationView {
-                List {
-                    Section("みとり算") {
-                        ForEach(1...4, id: \.self) { d in
-                            Button("\(d)桁 5口") { play(.addition, d, 1, 5) }
-                        }
+        ZStack {
+            switch currentScreen {
+            case .title:
+                TitleView(onStartSolo: { currentScreen = .modeSelect(isGhostMode: false) },
+                          onStartGhost: { currentScreen = .modeSelect(isGhostMode: true) })
+                
+            case .modeSelect(let isGhost):
+                ModeSelectView(isGhostMode: isGhost) { mode in
+                    if isGhost {
+                        currentScreen = .ghostSelect(mode: mode)
+                    } else {
+                        currentScreen = .digitSelect(mode: mode)
                     }
-                    Section("掛け算") {
-                        // 文字列をIDにすることでエラーを回避します
-                        let pairs = ["1x1", "2x1", "2x2", "3x1", "3x2", "3x3"]
-                        ForEach(pairs, id: \.self) { p in
-                            Button("\(p)") {
-                                let parts = p.split(separator: "x").map { Int($0)! }
-                                play(.multiplication, parts[0], parts[1])
-                            }
-                        }
-                    }
-                    Section("割り算") {
-                        let pairs = ["2/1", "3/1", "3/2", "4/1", "4/2"]
-                        ForEach(pairs, id: \.self) { p in
-                            Button("\(p.replacingOccurrences(of: "/", with: "÷"))") {
-                                let parts = p.split(separator: "/").map { Int($0)! }
-                                play(.division, parts[0], parts[1])
-                            }
-                        }
-                    }
+                } onBack: { currentScreen = .title }
+
+            case .digitSelect(let mode):
+                ProblemSelectView(mode: mode) { config in
+                    currentScreen = .game(config: config, ghost: nil)
+                } onBack: { currentScreen = .modeSelect(isGhostMode: false) }
+
+            case .ghostSelect(let mode):
+                GhostSelectView(ghostManager: ghostManager, mode: mode) { config, ghost in
+                    currentScreen = .game(config: config, ghost: ghost)
+                } onBack: { currentScreen = .modeSelect(isGhostMode: true) }
+
+            case .game(let config, let ghost):
+                GameView(ghostManager: ghostManager, config: config, ghostToBeat: ghost) {
+                    currentScreen = .title
                 }
-                .navigationTitle("そろばん暗算")
             }
         }
-    }
-
-    func play(_ mode: GameMode, _ d1: Int, _ d2: Int = 1, _ count: Int = 5) {
-        let config = LevelConfig(mode: mode, digits: d1, digitsRight: d2, count: count)
-        selectedGhost = ghostManager.records.last(where: { $0.mode == mode && $0.configLabel == config.label })
-        selectedConfig = config
     }
 }

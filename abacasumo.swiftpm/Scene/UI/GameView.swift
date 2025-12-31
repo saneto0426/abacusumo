@@ -15,6 +15,7 @@ struct GameView: View {
     @State private var gameState: Double = 0.5
     @State private var isGameOver = false
     @State private var showResultDialog = false
+    @State private var wonGame = false // 勝敗を保持するフラグを追加ですわ
 
     @State private var currentQuiz: (numbers: [Int], answer: Int) = ([], 0)
     @State private var currentIndex = 0
@@ -32,7 +33,6 @@ struct GameView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 名前を 'BattleBarComponent' に修正
             BattleBarComponent(value: gameState, isGhost: ghostToBeat != nil)
                 .padding(.top, 60)
 
@@ -55,16 +55,58 @@ struct GameView: View {
             if showResultDialog {
                 resultDialog
             } else {
-                // NumberPad を呼び出す
-                NumberPad(userInput: $userInput, actionLabel: mainLabel, actionColor: mainColor, onAction: handleMainAction)
-                    .padding(.bottom, 40)
+                VStack(spacing: 20) {
+                    NumberPad(userInput: $userInput, actionLabel: mainLabel, actionColor: mainColor, onAction: handleMainAction)
+                    
+                    // 負けた時だけ「タイトルに戻る」ボタンをひっそり出しますわ
+                    if isGameOver && !wonGame {
+                        Button("タイトルに戻る") {
+                            onBack()
+                        }
+                        .foregroundColor(.secondary)
+                        .padding(.bottom, 10)
+                    }
+                }
+                .padding(.bottom, 40)
             }
         }
         .onAppear { setupFirst() }
         .onReceive(timer) { _ in update() }
     }
 
-    // --- 以下ロジック (変更なし) ---
+    // --- ロジック ---
+    
+    func finish(won: Bool) {
+        isGameOver = true
+        wonGame = won
+        currentDisplayText = won ? "勝ち！" : "負け..."
+        
+        // ★ 修正：勝った時（won == true）だけ保存ダイアログを表示しますわ ★
+        if won {
+            showResultDialog = true
+        } else {
+            showResultDialog = false
+        }
+    }
+
+    var resultDialog: some View {
+        VStack(spacing: 20) {
+            Text("見事な勝利ですわ！\n今回のタイムをゴーストとして保存しますか？")
+                .multilineTextAlignment(.center)
+            HStack(spacing: 30) {
+                Button("いいえ") { onBack() }
+                    .padding().frame(width: 100).background(Color.gray.opacity(0.2)).cornerRadius(10)
+                Button("保存する") {
+                    let rec = GhostRecord(mode: config.mode, configLabel: config.label, solveIntervals: solveIntervals, date: Date())
+                    ghostManager.saveRecord(rec)
+                    onBack()
+                }.buttonStyle(.borderedProminent)
+            }
+        }.padding().background(Color.white).cornerRadius(15).shadow(radius: 10).padding()
+    }
+
+    // --- 以下、既存のロジックは維持ですわ ---
+
     var generator: ProblemGeneratable {
         switch config.mode {
         case .addition: return SimpleProblemGenerator()
@@ -76,14 +118,26 @@ struct GameView: View {
     func setupFirst() {
         currentQuiz = generator.makeQuiz(config: config)
         currentDisplayText = "準備完了"
+        wonGame = false
+        isGameOver = false
     }
 
     func handleMainAction() {
-        if isAnswering {
+        if isGameOver {
+            resetGame()
+        } else if isAnswering {
             if userInput.isEmpty {
                 if isSkipConfirmation { startNext() } else { isSkipConfirmation = true }
             } else { check() }
         } else { nextStep() }
+    }
+
+    func resetGame() {
+        gameState = 0.5
+        totalPlayTime = 0
+        solveIntervals = []
+        ghostSolvedCount = 0
+        setupFirst()
     }
 
     func startNext() {
@@ -123,25 +177,6 @@ struct GameView: View {
         if gameState <= 0 { finish(won: false) }
     }
 
-    func finish(won: Bool) {
-        isGameOver = true; showResultDialog = true
-        currentDisplayText = won ? "勝ち！" : "負け..."
-    }
-
-    var resultDialog: some View {
-        VStack(spacing: 20) {
-            Text("今回のタイムをゴーストとして保存しますか？")
-            HStack(spacing: 30) {
-                Button("No") { onBack() }
-                Button("Yes") {
-                    let rec = GhostRecord(mode: config.mode, configLabel: config.label, solveIntervals: solveIntervals, date: Date())
-                    ghostManager.saveRecord(rec)
-                    onBack()
-                }.buttonStyle(.borderedProminent)
-            }
-        }.padding().background(Color.white).cornerRadius(15).shadow(radius: 10).padding()
-    }
-
-    var mainLabel: String { isSkipConfirmation ? "スキップ" : (isAnswering ? "確定" : (currentIndex == 0 ? "開始" : "次へ")) }
-    var mainColor: Color { isSkipConfirmation ? .red : (isAnswering ? .orange : .green) }
+    var mainLabel: String { isGameOver ? "リトライ" : (isSkipConfirmation ? "スキップ" : (isAnswering ? "確定" : (currentIndex == 0 ? "開始" : "次へ"))) }
+    var mainColor: Color { isGameOver ? .blue : (isSkipConfirmation ? .red : (isAnswering ? .orange : .green)) }
 }

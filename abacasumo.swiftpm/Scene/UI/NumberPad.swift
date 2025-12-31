@@ -12,14 +12,12 @@ struct NumberPad: View {
     let actionLabel: String
     let actionColor: Color
     var onAction: () -> Void
-    
     let rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
-    
     var body: some View {
         VStack(spacing: 12) {
-            ForEach(0..<3) { rowIndex in
+            ForEach(rows, id: \.self) { row in
                 HStack(spacing: 12) {
-                    ForEach(rows[rowIndex], id: \.self) { label in
+                    ForEach(row, id: \.self) { label in
                         NumberButton(label: label) { userInput += label }
                     }
                 }
@@ -41,14 +39,11 @@ struct NumberButton: View {
     let label: String
     var color: Color = .gray
     var action: () -> Void
-    
     var body: some View {
         Button(action: { if label.count < 6 { action() } }) {
             Text(label).font(.title2).bold()
                 .frame(width: 80, height: 60)
-                .background(color)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .background(color).foregroundColor(.white).cornerRadius(12)
         }
     }
 }
