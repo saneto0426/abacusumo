@@ -4,46 +4,64 @@
 //
 //  Created by 🐣 on 2025/12/31.
 //
-
 import SwiftUI
 
 struct TitleView: View {
-    // ContentViewから渡されるアクションを受け取る変数
     var onStartSolo: () -> Void
     var onStartGhost: () -> Void
 
+    // iPadかどうかを判定しますわ
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+
     var body: some View {
-        VStack(spacing: 40) {
-            // 相撲風のタイトル
-            Text("あばかすもう")
-                .font(.system(size: 50, weight: .black, design: .serif))
-                .foregroundColor(.primary)
-            
-            VStack(spacing: 20) {
-                // 一人プレイボタン
-                Button(action: onStartSolo) {
-                    Text("一人稽古 (練習)")
-                        .font(.title2).bold()
-                        .frame(width: 280, height: 70)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(15)
-                        .shadow(radius: 5)
-                }
+        // ★ 画面の底から天までを一つのキャンバスと定義します
+        ZStack {
+            // --- 背景レイヤー ---
+            // 3000x4000の比率を保ちつつ、物理的な画面サイズいっぱいに広げます
+            Image("title_screen")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+
+            // --- UIレイヤー（ボタン） ---
+            VStack {
+                Spacer() // 上側を空けて、ボタンを下に寄せます
                 
-                // ゴースト対戦ボタン
-                Button(action: onStartGhost) {
-                    Text("巡業 (ゴースト対戦)")
-                        .font(.title2).bold()
-                        .frame(width: 280, height: 70)
-                        .background(Color.purple)
-                        .foregroundColor(.white)
-                        .cornerRadius(15)
-                        .shadow(radius: 5)
+                HStack(spacing: isPad ? 40 : 20) {
+                    // 一人稽古ボタン
+                    Button(action: onStartSolo) {
+                        ZStack {
+                            Image("button")
+                                .resizable()
+                                .frame(width: isPad ? 200 : 150, height: isPad ? 80 : 60)
+                            Text("一人稽古")
+                                .font(.system(size: isPad ? 24 : 18, weight: .bold))
+                                .foregroundColor(.black)
+                        }
+                    }
+                    
+                    // 巡業対戦ボタン
+                    Button(action: onStartGhost) {
+                        ZStack {
+                            Image("button")
+                                .resizable()
+                                .frame(width: isPad ? 200 : 150, height: isPad ? 80 : 60)
+                            Text("巡業対戦")
+                                .font(.system(size: isPad ? 24 : 18, weight: .bold))
+                                .foregroundColor(.black)
+                        }
+                    }
                 }
+                // iPadのホームインジケーター（下の棒）に被らないギリギリを攻めますわ
+                .padding(.bottom, isPad ? 80 : 50)
             }
         }
+        // ★ これが一番外側にかかっていることが重要ですわ！
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.gray.opacity(0.05).edgesIgnoringSafeArea(.all))
+        .background(Color.black) // 万が一の隙間も黒で埋めて違和感を消します
+        .ignoresSafeArea(.all) // 全てのセーフエリアを無視して突き進みますわ
     }
 }
