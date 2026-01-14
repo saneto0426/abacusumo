@@ -17,29 +17,27 @@ struct GhostSelectView: View {
     @State private var contentHeight: CGFloat = 0
     @State private var containerHeight: CGFloat = 0
 
-    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
-
     var body: some View {
-        ZStack(alignment: .trailing) {
-            // 画面全体の背景
-            Color.black.opacity(0.9).ignoresSafeArea()
+        GeometryReader { geo in
+            ZStack(alignment: .trailing) {
+                Color.black.ignoresSafeArea()
 
-            GeometryReader { containerGeo in
                 ScrollView {
-                    // ★ spacingを -1 にすることで、画像の継ぎ目の隙間を強制的に消しますわ
-                    VStack(spacing: -1) {
+                    // 画像の隙間をなくすため spacing: 0
+                    VStack(spacing: 0) {
                         
-                        // 1. 巻物の頭
-                        Image("makimono_head")
+                        // 1. 巻物の「上」（bottom画像を上下反転させて使用しますわ）
+                        Image("makimono_bottom")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: isPad ? 700 : 380)
+                            .scaleEffect(y: -1) // ★ここで上下反転させていますわ
+                            .frame(width: geo.size.width)
 
-                        // 2. 巻物の中身（背景とレコードを一体化）
-                        // ここがレコードの量に合わせて伸び縮みする部分ですわ
-                        VStack(spacing: 15) {
+                        // 2. 巻物の中身
+                        VStack(spacing: 20) {
+                            // モード名は英語で表示しますわ
                             Text("[ GHOST SELECT : \(mode.rawValue.uppercased()) ]")
-                                .font(.custom("Edo SZ", size: isPad ? 35 : 22))
+                                .font(.custom("Edo SZ", size: geo.size.width > 600 ? 35 : 24))
                                 .fontWeight(.black)
                                 .padding(.top, 10)
 
@@ -51,43 +49,37 @@ struct GhostSelectView: View {
                                     .padding(.vertical, 100)
                             } else {
                                 ForEach(filteredRecords) { record in
-                                    ghostRecordButton(record)
+                                    ghostRecordButton(record, screenWidth: geo.size.width)
                                 }
                             }
 
-                            // 戻るボタンも中身と一緒に動くようにここに置きますわ
                             Button(action: onBack) {
                                 ZStack {
-                                    Image("button")
-                                        .resizable()
-                                        .frame(width: 140, height: 55)
-                                    Text("BACK")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.black)
+                                    Image("button").resizable().frame(width: 140, height: 55)
+                                    Text("BACK").font(.system(size: 18, weight: .bold)).foregroundColor(.black)
                                 }
                             }
-                            .padding(.top, 30)
-                            .padding(.bottom, 10)
+                            .padding(.vertical, 30)
                         }
-                        .padding(.horizontal, isPad ? 120 : 50)
-                        // ★ ここで背景に middle を指定し、VStackの高さ一杯に広げますわ
+                        .padding(.horizontal, geo.size.width * 0.1)
+                        .frame(width: geo.size.width)
                         .background(
                             Image("makimono_middle")
                                 .resizable()
-                                .padding(.horizontal, isPad ? 10 : 5) // 左右の端を head に合わせる微調整
+                                // 前回の微調整：少し右にずらしていますわ
+                                .offset(x: geo.size.width > 600 ? 0 : 2)
                         )
 
-                        // 3. 巻物の底
+                        // 3. 巻物の「下」（そのまま使用）
                         Image("makimono_bottom")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: isPad ? 700 : 380)
+                            .frame(width: geo.size.width)
                     }
-                    // 全体の高さを測って力士アイコンの計算に使いますわ
                     .background(GeometryReader { contentGeo in
                         Color.clear.onAppear {
                             contentHeight = contentGeo.size.height
-                            containerHeight = containerGeo.size.height
+                            containerHeight = geo.size.height
                         }
                         .onChange(of: contentGeo.frame(in: .named("scroll")).minY) { newValue in
                             scrollOffset = newValue
@@ -96,63 +88,53 @@ struct GhostSelectView: View {
                 }
                 .coordinateSpace(name: "scroll")
                 .ignoresSafeArea()
-            }
 
-            // 右側の物差しと力士（インジケーター）
-            rulerIndicator()
+                // 右側の物差しインジケーター
+                rulerIndicator(screenHeight: geo.size.height)
+            }
         }
     }
 
-    // --- レコードボタンのデザイン ---
-    private func ghostRecordButton(_ record: GhostRecord) -> some View {
+    // --- 各レコードボタンのデザイン ---
+    private func ghostRecordButton(_ record: GhostRecord, screenWidth: CGFloat) -> some View {
         Button(action: {
+            // ラベルから設定を復元しますわ
             let config = recoverConfig(from: record)
             onSelect(config, record)
         }) {
             ZStack {
                 Image("record")
                     .resizable()
-                    .frame(height: isPad ? 110 : 75)
+                    .frame(height: screenWidth > 600 ? 110 : 80)
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(record.configLabel)
-                            .font(.custom("Edo SZ", size: isPad ? 24 : 18))
-                            .foregroundColor(.black)
+                            .font(.custom("Edo SZ", size: screenWidth > 600 ? 24 : 18))
                         Text(record.date, style: .date)
                             .font(.caption).foregroundColor(.black.opacity(0.6))
                     }
                     Spacer()
                     Text("\(String(format: "%.1f", record.solveIntervals.reduce(0,+)))s")
-                        .font(.custom("Edo SZ", size: isPad ? 26 : 19))
-                        .foregroundColor(.black)
+                        .font(.custom("Edo SZ", size: screenWidth > 600 ? 26 : 20))
                 }
-                .padding(.horizontal, 30)
+                .padding(.horizontal, 25)
+                .foregroundColor(.black)
             }
         }
     }
 
     // --- 右側の物差しインジケーター ---
-    private func rulerIndicator() -> some View {
+    private func rulerIndicator(screenHeight: CGFloat) -> some View {
         ZStack(alignment: .top) {
-            Image("ruler")
-                .resizable()
-                .frame(width: isPad ? 40 : 25, height: isPad ? 600 : 350)
-                .opacity(0.5)
-            
+            Image("ruler").resizable().frame(width: 25, height: screenHeight * 0.6).opacity(0.5)
             let totalScrollable = contentHeight - containerHeight
             let progress = totalScrollable > 0 ? (scrollOffset / totalScrollable) : 0
-            let clampedProgress = min(max(-progress, 0), 1)
-            
-            Image("icon_sumo")
-                .resizable()
-                .frame(width: isPad ? 60 : 40, height: isPad ? 60 : 40)
-                .offset(y: clampedProgress * (isPad ? 540 : 310))
+            Image("icon_sumo").resizable().frame(width: 40, height: 40)
+                .offset(y: min(max(-progress, 0), 1) * (screenHeight * 0.6 - 40))
         }
-        .padding(.trailing, isPad ? 40 : 15)
-        .zIndex(10)
+        .padding(.trailing, 10)
     }
 
-    // レコードからの復元ロジック
     func recoverConfig(from record: GhostRecord) -> LevelConfig {
         let digits = record.configLabel.compactMap { Int(String($0)) }
         return LevelConfig(mode: mode, digits: digits.first ?? 1, digitsRight: digits.last ?? 1)

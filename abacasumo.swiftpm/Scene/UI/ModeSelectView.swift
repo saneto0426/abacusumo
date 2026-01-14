@@ -18,13 +18,13 @@ struct ModeSelectView: View {
 
     // ★ 書道・明朝体風のフォント指定ですわ
     private func calligraphyFont(size: CGFloat) -> Font {
-        return .custom("SavoyeLetPlain", size: size)
+        return .custom("Papyrus", size: size)
     }
 
     var body: some View {
         ZStack {
             // --- 背景レイヤー ---
-            Image(isGhostMode ? "n_select_screen" : "title_screen")
+            Image(isGhostMode ? "n_select_screen" : "o_select_screen")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
@@ -74,7 +74,8 @@ struct ModeSelectView: View {
                             .frame(width: isPad ? 180 : 130, height: isPad ? 70 : 50)
                         
                         Text("BACK")
-                            .font(.system(size: isPad ? 22 : 16, weight: .bold))
+                            .font(calligraphyFont(size: isPad ? 22 : 16))
+                            .fontWeight(.bold)
                             .foregroundColor(.black)
                     }
                 }
