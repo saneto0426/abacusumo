@@ -36,7 +36,7 @@ struct TitleView: View {
                                 .scaledToFit()
                                 .frame(width: isPad ? 220 : 160) // 少し大きめに調整しましたわ
                             
-                            Text("一人稽古")
+                            Text("solo mode")
                                 .font(.system(size: isPad ? 26 : 20, weight: .bold, design: .serif))
                                 .foregroundColor(.black)
                                 .offset(y: -2) // 画像の重心に合わせて微調整ですわ
@@ -52,7 +52,7 @@ struct TitleView: View {
                                 .scaledToFit()
                                 .frame(width: isPad ? 220 : 160)
                             
-                            Text("巡業対戦")
+                            Text("ghost mode")
                                 .font(.system(size: isPad ? 26 : 20, weight: .bold, design: .serif))
                                 .foregroundColor(.black)
                                 .offset(y: -2)
