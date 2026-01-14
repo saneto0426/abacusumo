@@ -8,61 +8,75 @@
 import SwiftUI
 
 struct TitleView: View {
-    var onStartSolo: () -> Void
-    var onStartGhost: () -> Void
+    var onStart: (GameMode) -> Void
+    var onGhostMode: () -> Void
 
+    @State private var isAnimating = false
     private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
     var body: some View {
         ZStack {
-            // 背景レイヤー
-            Image("title_screen")
+            // --- 1. 背景（画面一杯に） ---
+            Image("title_screen") // もしくは "title_background"
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-                .clipped()
+                .ignoresSafeArea()
 
-            // UIレイヤー（ボタン）
-            VStack {
+            VStack(spacing: 20) {
                 Spacer()
+
+                // --- 2. ロゴとふよふよゴースト ---
+                ZStack(alignment: .top) {
+                    // ゴーストのアニメーション
+                    Image("ghost")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: isPad ? 150 : 100)
+                        .offset(y: isAnimating ? -25 : 15)
+                        .animation(
+                            Animation.easeInOut(duration: 2.5).repeatForever(autoreverses: true),
+                            value: isAnimating
+                        )
+                        .onAppear { isAnimating = true }
+                        .offset(y: isPad ? -140 : -90)
+                    
+                    // タイトルロゴ
+                    Image("title_logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: isPad ? 650 : 380)
+                }
                 
-                HStack(spacing: isPad ? 40 : 20) {
-                    // 一人稽古ボタン
-                    Button(action: onStartSolo) {
+                Spacer()
+
+                // --- 3. 元のスタイルのボタン群 ---
+                VStack(spacing: isPad ? 40 : 20) {
+                    // 一人稽古（SOLO TRAINING）
+                    Button(action: { onStart(.addition) }) { // デフォルトでみとり等
                         ZStack {
-                            // ★ 背景を「option」画像に変更しましたわ！
-                            Image("option")
+                            Image("key") // 元のボタン画像
                                 .resizable()
-                                .scaledToFit()
-                                .frame(width: isPad ? 220 : 160) // 少し大きめに調整しましたわ
-                            
-                            Text("solo mode")
-                                .font(.system(size: isPad ? 26 : 20, weight: .bold, design: .serif))
+                                .frame(width: isPad ? 450 : 300, height: isPad ? 90 : 60)
+                            Text("SOLO TRAINING")
+                                .font(.custom("Papyrus", size: isPad ? 36 : 24))
                                 .foregroundColor(.black)
-                                .offset(y: -2) // 画像の重心に合わせて微調整ですわ
                         }
                     }
                     
-                    // 巡業対戦ボタン
-                    Button(action: onStartGhost) {
+                    // ゴースト対戦（GHOST MATCH）
+                    Button(action: { onGhostMode() }) {
                         ZStack {
-                            // ★ こちらも「option」に変更ですわ
-                            Image("option")
+                            Image("key")
                                 .resizable()
-                                .scaledToFit()
-                                .frame(width: isPad ? 220 : 160)
-                            
-                            Text("ghost mode")
-                                .font(.system(size: isPad ? 26 : 20, weight: .bold, design: .serif))
+                                .frame(width: isPad ? 450 : 300, height: isPad ? 90 : 60)
+                            Text("GHOST MATCH")
+                                .font(.custom("Papyrus", size: isPad ? 36 : 24))
                                 .foregroundColor(.black)
-                                .offset(y: -2)
                         }
                     }
                 }
                 .padding(.bottom, isPad ? 100 : 60)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea()
     }
 }

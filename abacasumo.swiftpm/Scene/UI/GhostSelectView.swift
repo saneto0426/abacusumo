@@ -23,17 +23,19 @@ struct GhostSelectView: View {
                 Color.black.ignoresSafeArea()
 
                 ScrollView {
-                    // 画像同士の隙間を消すために spacing: 0 に戻しますわ
+                    // 画像の隙間をなくすため spacing: 0
                     VStack(spacing: 0) {
                         
-                        // 1. 巻物の頭（画面幅ピッタリ）
-                        Image("makimono_head")
+                        // 1. 巻物の「上」（bottom画像を上下反転させて使用しますわ）
+                        Image("makimono_bottom")
                             .resizable()
                             .scaledToFit()
+                            .scaleEffect(y: -1) // ★ここで上下反転させていますわ
                             .frame(width: geo.size.width)
 
-                        // 2. 巻物の中身（背景が画面幅いっぱいに広がりますわ）
+                        // 2. 巻物の中身
                         VStack(spacing: 20) {
+                            // モード名は英語で表示しますわ
                             Text("[ GHOST SELECT : \(mode.rawValue.uppercased()) ]")
                                 .font(.custom("Edo SZ", size: geo.size.width > 600 ? 35 : 24))
                                 .fontWeight(.black)
@@ -59,15 +61,16 @@ struct GhostSelectView: View {
                             }
                             .padding(.vertical, 30)
                         }
-                        .padding(.horizontal, geo.size.width * 0.1) // 左右に10%の余白を設けてレコードを中央に
-                        .frame(width: geo.size.width) // コンテンツエリア自体の幅を固定
+                        .padding(.horizontal, geo.size.width * 0.1)
+                        .frame(width: geo.size.width)
                         .background(
                             Image("makimono_middle")
                                 .resizable()
-                                .offset(x: geo.size.width > 600 ? -4 : -2) // 微調整のオフセット
+                                // 前回の微調整：少し右にずらしていますわ
+                                .offset(x: geo.size.width > 600 ? 0 : 2)
                         )
 
-                        // 3. 巻物の底（画面幅ピッタリ）
+                        // 3. 巻物の「下」（そのまま使用）
                         Image("makimono_bottom")
                             .resizable()
                             .scaledToFit()
@@ -92,8 +95,10 @@ struct GhostSelectView: View {
         }
     }
 
+    // --- 各レコードボタンのデザイン ---
     private func ghostRecordButton(_ record: GhostRecord, screenWidth: CGFloat) -> some View {
         Button(action: {
+            // ラベルから設定を復元しますわ
             let config = recoverConfig(from: record)
             onSelect(config, record)
         }) {
@@ -118,6 +123,7 @@ struct GhostSelectView: View {
         }
     }
 
+    // --- 右側の物差しインジケーター ---
     private func rulerIndicator(screenHeight: CGFloat) -> some View {
         ZStack(alignment: .top) {
             Image("ruler").resizable().frame(width: 25, height: screenHeight * 0.6).opacity(0.5)

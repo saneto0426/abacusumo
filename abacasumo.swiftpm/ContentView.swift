@@ -19,8 +19,8 @@ struct ContentView: View {
         ZStack {
             switch currentScreen {
             case .title:
-                TitleView(onStartSolo: { currentScreen = .modeSelect(isGhostMode: false) },
-                          onStartGhost: { currentScreen = .modeSelect(isGhostMode: true) })
+                TitleView(onStart: { _ in currentScreen = .modeSelect(isGhostMode: false) },
+                          onGhostMode: { currentScreen = .modeSelect(isGhostMode: true) })
                 
             case .modeSelect(let isGhost):
                 ModeSelectView(isGhostMode: isGhost) { mode in
