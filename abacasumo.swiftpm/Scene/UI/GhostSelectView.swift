@@ -45,7 +45,7 @@ struct GhostSelectView: View {
 
                             if filteredRecords.isEmpty {
                                 Text("NO RECORDS FOUND")
-                                    .font(.custom("Edo SZ", size: 20))
+                                    .font(.custom("Papyrus", size: 20))
                                     .padding(.vertical, 100)
                             } else {
                                 ForEach(filteredRecords) { record in
@@ -55,7 +55,7 @@ struct GhostSelectView: View {
 
                             Button(action: onBack) {
                                 ZStack {
-                                    Image("button").resizable().frame(width: 140, height: 55)
+                                    Image("key").resizable().frame(width: 140, height: 55)
                                     Text("BACK").font(.system(size: 18, weight: .bold)).foregroundColor(.black)
                                 }
                             }
@@ -109,13 +109,13 @@ struct GhostSelectView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(record.configLabel)
-                            .font(.custom("Edo SZ", size: screenWidth > 600 ? 24 : 18))
+                            .font(.custom("Papyrus", size: screenWidth > 600 ? 24 : 18))
                         Text(record.date, style: .date)
                             .font(.caption).foregroundColor(.black.opacity(0.6))
                     }
                     Spacer()
                     Text("\(String(format: "%.1f", record.solveIntervals.reduce(0,+)))s")
-                        .font(.custom("Edo SZ", size: screenWidth > 600 ? 26 : 20))
+                        .font(.custom("Papyrus", size: screenWidth > 600 ? 26 : 20))
                 }
                 .padding(.horizontal, 25)
                 .foregroundColor(.black)

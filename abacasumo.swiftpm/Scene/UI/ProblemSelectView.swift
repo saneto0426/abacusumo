@@ -11,14 +11,14 @@ struct ProblemSelectView: View {
     var onSelect: (LevelConfig) -> Void
     var onBack: () -> Void
 
-    // デバイス判定ですわ
+    // デバイス判定
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
     }
 
     var body: some View {
         ZStack {
-            // 1. 【背景】o_select_screen を全画面に配置しますわ
+            // 1. 【背景】
             Image("o_select_screen")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
@@ -27,9 +27,10 @@ struct ProblemSelectView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 20) {
-                // ヘッダー（英語表記）
-                Text("SELECT \(mode.rawValue.uppercased()) LEVEL")
-                    .font(.system(size: isPad ? 40 : 24, weight: .black, design: .serif))
+                // ヘッダー（Papyrusフォント）
+                Text("SELECT LEVEL")
+                    .font(.custom("Papyrus", size: isPad ? 44 : 26)) // Papyrusに変更
+                    .fontWeight(.bold)
                     .foregroundColor(.black)
                     .padding(.top, isPad ? 60 : 40)
 
@@ -65,11 +66,12 @@ struct ProblemSelectView: View {
                 // 戻るボタン
                 Button(action: onBack) {
                     ZStack {
-                        Image("button") // ここは他と合わせてbutton画像を使いますわ
+                        Image("key")
                             .resizable()
                             .frame(width: isPad ? 200 : 140, height: isPad ? 80 : 55)
                         Text("BACK")
-                            .font(.system(size: isPad ? 24 : 18, weight: .bold))
+                            .font(.custom("Papyrus", size: isPad ? 26 : 20)) // Papyrusに変更
+                            .fontWeight(.bold)
                             .foregroundColor(.black)
                     }
                 }
@@ -78,19 +80,20 @@ struct ProblemSelectView: View {
         }
     }
 
-    // ★ 選択肢のボタン（背景をoption画像にしますわ）
+    // 選択肢のボタン
     func levelButton(label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             ZStack {
                 Image("option")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: isPad ? 450 : 280) // 画面サイズに合わせて調整
+                    .frame(width: isPad ? 450 : 280)
                 
                 Text(label)
-                    .font(.system(size: isPad ? 32 : 20, weight: .black, design: .monospaced))
+                    .font(.custom("Papyrus", size: isPad ? 34 : 22)) // Papyrusに変更
+                    .fontWeight(.black)
                     .foregroundColor(.black)
-                    .offset(y: -2) // 重心の微調整
+                    .offset(y: -2)
             }
         }
     }
