@@ -68,14 +68,28 @@ struct GameView: View {
                             .zIndex(1)
 
                         // 【レイヤー2：玉たち (ゲージ)】
-                        HStack(spacing: isPad ? 14.5 : 18) {
+                        HStack(spacing: isPad ? 14 : 18) {
+                            // 1. 現状のサイズと間隔をそのまま変数に置きます（計算用ですわ）
+                            let bW: CGFloat = isPad ? 120 : 30   // 玉の横幅
+                            let sp: CGFloat = isPad ? 14 : 18    // 玉の間隔
+                            let totalW = (bW * 5) + (sp * 4)     // 5個の玉と4つの隙間の合計幅
+
                             ForEach(0..<5) { i in
+                                // 2. 各玉の「右端」が、中央(0)から見てどこにあるか物理計算
+                                // 左端の座標：-totalW / 2
+                                let rightEdge = (-totalW / 2) + (bW * CGFloat(i + 1)) + (sp * CGFloat(i))
+                                
+                                // 3. 力士の移動範囲（geo.size.width）に合わせてしきい値を算出
+                                // 力士の移動式に合わせて、物理座標を 0.0〜1.0 の範囲に変換しますの
+                                let threshold = (rightEdge / geo.size.width) + 0.5
+                                
                                 Image("key").resizable()
-                                    .frame(width: isPad ? 120 : 30, height: isPad ? 88 : 22)
-                                    .colorMultiply(gameState > Double(i) / 5.0 ? .white : .black)
+                                    .frame(width: bW, height: isPad ? 88 : 22) // ★サイズは変えていませんわ！
+                                    // gameStateがしきい値を越えたら白（活性化）にする
+                                    .colorMultiply(gameState > threshold ? .white : .black)
                             }
                         }
-                        .offset(y: isPad ? 430 : 35) // フレームの溝の位置に合わせる
+                        .offset(y: isPad ? 430 : 35)
                         .zIndex(2)
 
                         // 【レイヤー1：一番手前】相撲 (Sumo)
@@ -87,7 +101,7 @@ struct GameView: View {
                                 }
                             } else {
                                 Image("sumo_torikumi").resizable().aspectRatio(contentMode: .fit).frame(width: isPad ? 220 : 120)
-                                    .offset(x: geo.size.width * 0.4 * CGFloat(gameState - 0.5))
+                                    .offset(x: geo.size.width * 1 * CGFloat(gameState - 0.5))
                             }
                         }
                         .offset(y: isPad ? 270 : -40) // フレームの上に乗るように少し上にずらす
@@ -104,6 +118,23 @@ struct GameView: View {
         }
         .onAppear { setupFirst() }
         .onReceive(timer) { _ in update() }
+        .overlay(alignment: .topLeading) { // 左上に配置
+                Button(action: onBack) {
+                    ZStack {
+                        
+                        
+                        Image("button") // 戻るアイコン
+                            .resizable() // ★これを入れないとサイズ変更が効きませんの！
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: isPad ?  45 : 18, height: isPad ? 45 : 18) // ここで実際の大きさを指定
+                            .foregroundColor(.white) // 元画像がテンプレートなら色が付きますわ
+                    }
+                }
+                .padding(.top, isPad ? 40 : 50) // iPhoneのノッチを避ける
+                .padding(.leading, 20)
+            }
+            .onAppear { setupFirst() }
+            .onReceive(timer) { _ in update() }
     }
 
     // MARK: - Logic functions
@@ -116,6 +147,7 @@ struct GameView: View {
     func setupFirst() {
         currentQuiz = generator.makeQuiz(config: config)
         currentDisplayText = "READY"
+        currentIndex = 0 // ★ここを追加！
         isGameOver = false
     }
 
@@ -151,12 +183,35 @@ struct GameView: View {
     }
 
     func update() {
-        guard !isGameOver && currentIndex > 0 else { return }
-        gameState -= 0.001
-        if gameState <= 0 { isGameOver = true; currentDisplayText = "LOSE" }
-        else if gameState >= 1.0 { isGameOver = true; currentDisplayText = "WIN!" }
-    }
+        // 1. ゲーム中ではない時は何もしない
+        guard !isGameOver && currentDisplayText != "READY" && currentIndex > 0 else { return }
+        
+        gameState -= 0.0005 // 時間経過で力士が押し込まれる（数値が減る）
 
+        // --- 勝敗ライン（しきい値）の計算 ---
+        // 玉のサイズと間隔（ここをUI側の数値と合わせておきますわ）
+        let bW: CGFloat = isPad ? 120 : 30
+        let sp: CGFloat = isPad ? 14 : 18
+        let totalW = (bW * 5) + (sp * 4)
+        let screenWidth = UIScreen.main.bounds.width
+
+        // 左端の玉の右端（ここを越えて左に行くと、一番左の玉が黒くなる）
+        let loseThreshold = ((-totalW / 2 + bW) / screenWidth) + 0.5
+        
+        // 右端の玉の右端（ここを越えて右に行くと、一番右の玉が白くなる）
+        let winThreshold = ((totalW / 2) / screenWidth) + 0.5
+
+        // 2. 玉の色が変わったかどうかの判定
+        if gameState <= loseThreshold {
+            // 左端の玉が黒くなった瞬間に負け！
+            isGameOver = true
+            currentDisplayText = "LOSE"
+        } else if gameState >= winThreshold {
+            // 右端の玉が白くなった瞬間に勝ち！
+            isGameOver = true
+            currentDisplayText = "WIN!"
+        }
+    }
     var generator: ProblemGeneratable {
         config.mode == .addition ? SimpleProblemGenerator() : MultiProblemGenerator()
     }
