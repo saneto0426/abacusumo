@@ -69,7 +69,7 @@ struct ModeSelectView: View {
                 // 戻るボタン
                 Button(action: onBack) {
                     ZStack {
-                        Image("button")
+                        Image("key")
                             .resizable()
                             .frame(width: isPad ? 180 : 130, height: isPad ? 70 : 50)
                         
