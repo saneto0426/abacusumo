@@ -26,6 +26,8 @@ struct TitleView: View {
             Image("title_screen")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -62,7 +64,7 @@ struct TitleView: View {
                     // 一人稽古（SOLO TRAINING）
                     Button(action: { onStart(.addition) }) {
                         ZStack {
-                            Image("key").resizable()
+                            Image("button").resizable()
                                 .frame(width: isPad ? 450 : 300, height: isPad ? 90 : 60)
                             Text("SOLO TRAINING")
                                 .font(.custom("Papyrus", size: isPad ? 36 : 24))
@@ -73,7 +75,7 @@ struct TitleView: View {
                     // ゴースト対戦（GHOST MATCH）
                     Button(action: { onGhostMode() }) {
                         ZStack {
-                            Image("key").resizable()
+                            Image("button").resizable()
                                 .frame(width: isPad ? 450 : 300, height: isPad ? 90 : 60)
                             Text("GHOST MATCH")
                                 .font(.custom("Papyrus", size: isPad ? 36 : 24))

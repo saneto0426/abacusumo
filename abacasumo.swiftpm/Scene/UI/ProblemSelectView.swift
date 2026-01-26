@@ -31,7 +31,7 @@ struct ProblemSelectView: View {
                 Text("SELECT LEVEL")
                     .font(.custom("Papyrus", size: isPad ? 44 : 26)) // Papyrusに変更
                     .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
                     .padding(.top, isPad ? 60 : 40)
 
                 ScrollView(.vertical, showsIndicators: false) {
@@ -63,19 +63,19 @@ struct ProblemSelectView: View {
                     .padding(.vertical, 20)
                 }
 
-                // 戻るボタン
                 Button(action: onBack) {
                     ZStack {
-                        Image("key")
-                            .resizable()
-                            .frame(width: isPad ? 200 : 140, height: isPad ? 80 : 55)
-                        Text("BACK")
-                            .font(.custom("Papyrus", size: isPad ? 26 : 20)) // Papyrusに変更
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
+                        
+                        
+                        Image("back") // 戻るアイコン
+                            .resizable() // ★これを入れないとサイズ変更が効きませんの！
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: isPad ?  45 : 18, height: isPad ? 45 : 18) // ここで実際の大きさを指定
+                            .foregroundColor(.white) // 元画像がテンプレートなら色が付きますわ
                     }
                 }
-                .padding(.bottom, isPad ? 60 : 30)
+                .offset(y: isPad ? -1095 : 35)
+                .offset(x: isPad ? -367.5 : 35)
             }
         }
     }
