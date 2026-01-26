@@ -34,11 +34,11 @@ struct ModeSelectView: View {
             // --- UIレイヤー ---
             VStack(spacing: isPad ? 40 : 25) {
                 // タイトル：英語に変更 ＆ ゴーストモード時は白文字に
-                Text(isGhostMode ? "[ GHOST MATCH : SELECT MODE ]" : "[ SOLO TRAINING : SELECT MODE ]")
-                    .font(calligraphyFont(size: isPad ? 32 : 20))
+                Text( " SELECT MODE ")
+                    .font(.custom("Papyrus", size: isPad ? 44 : 26))
                     .fontWeight(.black)
                     // ★ ゴーストモードなら白、一人稽古なら黒にしますわ
-                    .foregroundColor(isGhostMode ? .white : .black)
+                    .foregroundColor( .white )
                     .padding(.top, isPad ? 60 : 40)
 
                 Spacer()
@@ -51,7 +51,7 @@ struct ModeSelectView: View {
                                 Image("option")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: isPad ? 350 : 260)
+                                    .frame(width: isPad ? 450 : 280)
                                 
                                 // モード名も英語ですわ
                                 Text(modeName(mode))
@@ -69,17 +69,18 @@ struct ModeSelectView: View {
                 // 戻るボタン
                 Button(action: onBack) {
                     ZStack {
-                        Image("key")
-                            .resizable()
-                            .frame(width: isPad ? 180 : 130, height: isPad ? 70 : 50)
                         
-                        Text("BACK")
-                            .font(calligraphyFont(size: isPad ? 22 : 16))
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
+                        
+                        Image("back") // 戻るアイコン
+                            .resizable() // ★これを入れないとサイズ変更が効きませんの！
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: isPad ?  45 : 18, height: isPad ? 45 : 18) // ここで実際の大きさを指定
+                            .foregroundColor(.white) // 元画像がテンプレートなら色が付きますわ
                     }
                 }
-                .padding(.bottom, isPad ? 80 : 50)
+                .offset(y: isPad ? -1095 : 35)
+                .offset(x: isPad ? -367.5 : 35)
+                
             }
         }
     }

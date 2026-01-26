@@ -33,8 +33,9 @@ struct GhostRecord: Codable, Identifiable {
     var id = UUID()
     let mode: GameMode
     let configLabel: String
-    let solveIntervals: [TimeInterval] // 各問題を解くのにかかった秒数
+    let solveIntervals: [TimeInterval]
     let date: Date
+    var playerName: String // ★追加: プレイヤー名
 }
 
 class GhostManager: ObservableObject {

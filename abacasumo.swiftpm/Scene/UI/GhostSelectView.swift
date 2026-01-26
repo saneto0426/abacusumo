@@ -96,9 +96,10 @@ struct GhostSelectView: View {
     }
 
     // --- 各レコードボタンのデザイン ---
+   
+
     private func ghostRecordButton(_ record: GhostRecord, screenWidth: CGFloat) -> some View {
         Button(action: {
-            // ラベルから設定を復元しますわ
             let config = recoverConfig(from: record)
             onSelect(config, record)
         }) {
@@ -108,8 +109,14 @@ struct GhostSelectView: View {
                     .frame(height: screenWidth > 600 ? 110 : 80)
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
+                        // ★変更: 名前を表示
+                        Text("\(record.playerName) の記録")
+                            .font(.custom("Papyrus", size: screenWidth > 600 ? 16 : 12))
+                            .foregroundColor(.black)
+                        
                         Text(record.configLabel)
                             .font(.custom("Papyrus", size: screenWidth > 600 ? 24 : 18))
+                        
                         Text(record.date, style: .date)
                             .font(.caption).foregroundColor(.black.opacity(0.6))
                     }
