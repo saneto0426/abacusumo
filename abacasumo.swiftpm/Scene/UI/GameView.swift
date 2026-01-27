@@ -10,7 +10,7 @@ import SwiftUI
 struct GameView: View {
     @ObservedObject var ghostManager: GhostManager
     let config: LevelConfig
-    let ghostToBeat: GhostRecord? // これがnilならシングルモード
+    let ghostToBeat: GhostRecord? // nilならシングルモード
     var onBack: () -> Void
 
     @State private var gameState: Double = 0.5
@@ -21,18 +21,18 @@ struct GameView: View {
     @State private var userInput: String = ""
     @State private var isAnswering = false
     
-    // 変数定義
+    // UI用変数
     @State private var showEmptyWarning = false
     @State private var showNameInput = false
     @State private var inputName = ""
     
-    @State private var totalPlayTime: TimeInterval = 0
+    // 計測用
     @State private var lastProblemStartTime: Date?
     @State private var solveIntervals: [TimeInterval] = []
     
-    // ゴースト用変数
-    @State private var ghostSolveTimestamps: [TimeInterval] = []
-    @State private var nextGhostIndex = 0
+    // ★変更: ゴースト制御用の変数
+    @State private var ghostAverageInterval: TimeInterval = 3.0 // デフォルト値
+    @State private var ghostAttackTimer: TimeInterval = 0 // 攻撃までのカウントダウン
 
     let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
@@ -54,6 +54,7 @@ struct GameView: View {
                         // 【レイヤー4：一番奥】掲示板 (Board)
                         VStack {
                             ZStack {
+                                Spacer()
                                 Image("board")
                                     .resizable()
                                     .frame(width: isPad ? 400 : 220, height: isPad ? 300 : 90)
@@ -110,12 +111,22 @@ struct GameView: View {
                         .zIndex(3)
                     }
                     .frame(width: geo.size.width, height: isPad ? 600 : 350)
-                    
+                    Spacer()
                     // --- テンキー (下部) ---
                     SorobanTenkey(userInput: $userInput, actionLabel: mainLabel, onAction: handleMainAction, isPad: isPad)
-                        .padding(.bottom, geo.safeAreaInsets.bottom + 15)
+//                        .padding(.bottom, geo.safeAreaInsets.bottom + 15)
                         .disabled(showNameInput) // 名前入力中は無効化
+                        .offset(y: 0) // テンキー自体のズレは0に
+                        .padding(.bottom, 20) // 下に少し余裕を持たせる
+                    
+                    Spacer()
+                   
                 }
+                .frame(width: geo.size.width) // 横幅はいっぱいに
+                    // ★修正2: 全体をガツンと上に引き上げます！
+                    // 盤面の上にある「透明な余白」を画面外に出すイメージです。
+                    // 実機でまだ低い場合は、この -200 を -250 や -300 に増やしてください。
+                    .offset(y: isPad ? 0 : 0)
             }
 
             // 名前入力画面 (ZStackの最後に配置)
@@ -225,18 +236,18 @@ struct GameView: View {
         showEmptyWarning = false
         lastProblemStartTime = Date()
         
-        // ゴーストと時間の初期化
-        totalPlayTime = 0
-        ghostSolveTimestamps = []
-        nextGhostIndex = 0
+        // ゴーストとタイマーの初期化
+        ghostAttackTimer = 0
         
-        // ゴーストがいる場合のみ、解答タイミング表を作る
-        if let ghost = ghostToBeat {
-            var accumulatedTime: TimeInterval = 0
-            for interval in ghost.solveIntervals {
-                accumulatedTime += interval
-                ghostSolveTimestamps.append(accumulatedTime)
-            }
+        // ★変更: 平均ペースを計算するロジック
+        if let ghost = ghostToBeat, !ghost.solveIntervals.isEmpty {
+            let totalTime = ghost.solveIntervals.reduce(0, +)
+            // 合計時間 ÷ 問題数 = 1問あたりの平均秒数
+            ghostAverageInterval = totalTime / Double(ghost.solveIntervals.count)
+            print("Ghost Average Interval: \(ghostAverageInterval) sec")
+        } else {
+            // シングルモードやデータがない時の安全策（ここでは使いませんが）
+            ghostAverageInterval = 999
         }
     }
     
@@ -276,7 +287,7 @@ struct GameView: View {
             solveIntervals.append(interval)
         }
         if Int(userInput) == currentQuiz.answer {
-            gameState = min(1.0, gameState + 0.1) // プレイヤーが押し返す強さ
+            gameState = min(1.0, gameState + 0.1) // プレイヤーの押し返し
         }
         startNext()
     }
@@ -284,23 +295,22 @@ struct GameView: View {
     func update() {
         guard !isGameOver && currentDisplayText != "READY" && currentIndex > 0 else { return }
         
-        // 経過時間を更新
-        totalPlayTime += 0.05
-        
         // ★ここが分岐点です！★
         if ghostToBeat == nil {
             // ▼ シングルモード：時間経過でじわじわ減る（毒沼方式）
-            // 0.0005 は好みの速さに調整してください
             gameState -= 0.0005
             
         } else {
-            // ▼ ゴーストモード：相手が解いた時だけ減る（マリカ方式）
-            if nextGhostIndex < ghostSolveTimestamps.count {
-                if totalPlayTime >= ghostSolveTimestamps[nextGhostIndex] {
-                    // ゴーストのアタック！
-                    gameState -= 0.1 // プレイヤーの回復量と同じにすると公平です
-                    nextGhostIndex += 1
-                }
+            // ▼ ゴーストモード：平均ペースで定期的に「ガツン」と押してくる
+            ghostAttackTimer += 0.05
+            
+            if ghostAttackTimer >= ghostAverageInterval {
+                // 平均時間が経過したので、ゴーストのアタック！
+                // プレイヤーが勝った時と同じ距離(0.1)だけ押し返す
+                gameState -= 0.1
+                
+                // タイマーをリセットして次の攻撃に備える
+                ghostAttackTimer = 0
             }
         }
 
@@ -382,6 +392,6 @@ struct SorobanTenkey: View {
                 }
             }
         }
-        .offset(y: isPad ? 150 : 20)
+        .offset(y: isPad ? 0 : 20)
     }
 }
