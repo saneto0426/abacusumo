@@ -62,21 +62,24 @@ struct ProblemSelectView: View {
                     }
                     .padding(.vertical, 20)
                 }
-
-                Button(action: onBack) {
-                    ZStack {
-                        
-                        
-                        Image("back") // 戻るアイコン
-                            .resizable() // ★これを入れないとサイズ変更が効きませんの！
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: isPad ?  45 : 18, height: isPad ? 45 : 18) // ここで実際の大きさを指定
-                            .foregroundColor(.white) // 元画像がテンプレートなら色が付きますわ
-                    }
-                }
-                .offset(y: isPad ? -1095 : 35)
-                .offset(x: isPad ? -367.5 : 35)
+                
+                // ★以前ここにあった戻るボタンは削除しました（overlayに移動）
             }
+        }
+        // ★ GameViewと同じOverlay方式で戻るボタンを左上に配置
+        .overlay(alignment: .topLeading) {
+            Button(action: onBack) {
+                ZStack {
+                    Image("back") // 戻るアイコン
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: isPad ? 45 : 18, height: isPad ? 45 : 18)
+                        .foregroundColor(.white)
+                }
+            }
+            // GameViewと位置を合わせるためのパディング
+            .padding(.top, isPad ? 40 : 50)
+            .padding(.leading, 20)
         }
     }
 

@@ -69,3 +69,4 @@ class GhostManager: ObservableObject {
         }
     }
 }
+//コアデータ・swiftデータ
