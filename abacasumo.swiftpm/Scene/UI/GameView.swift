@@ -10,7 +10,7 @@ import SwiftUI
 struct GameView: View {
     @ObservedObject var ghostManager: GhostManager
     let config: LevelConfig
-    let ghostToBeat: GhostRecord?
+    let ghostToBeat: GhostRecord? // これがnilならシングルモード
     var onBack: () -> Void
 
     @State private var gameState: Double = 0.5
@@ -29,7 +29,10 @@ struct GameView: View {
     @State private var totalPlayTime: TimeInterval = 0
     @State private var lastProblemStartTime: Date?
     @State private var solveIntervals: [TimeInterval] = []
-    @State private var ghostSolvedCount = 0
+    
+    // ゴースト用変数
+    @State private var ghostSolveTimestamps: [TimeInterval] = []
+    @State private var nextGhostIndex = 0
 
     let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
@@ -72,6 +75,7 @@ struct GameView: View {
                             .frame(width: geo.size.width, height: isPad ? 100 : 180)
                             .offset(y: isPad ?  595:30) // 掲示板の下に来るように調整
                             .zIndex(1)
+
                         // 【レイヤー2：玉たち (ゲージ)】
                         HStack(spacing: isPad ? 14 : 18) {
                             let bW: CGFloat = isPad ? 120 : 30
@@ -220,11 +224,24 @@ struct GameView: View {
         inputName = ""
         showEmptyWarning = false
         lastProblemStartTime = Date()
+        
+        // ゴーストと時間の初期化
+        totalPlayTime = 0
+        ghostSolveTimestamps = []
+        nextGhostIndex = 0
+        
+        // ゴーストがいる場合のみ、解答タイミング表を作る
+        if let ghost = ghostToBeat {
+            var accumulatedTime: TimeInterval = 0
+            for interval in ghost.solveIntervals {
+                accumulatedTime += interval
+                ghostSolveTimestamps.append(accumulatedTime)
+            }
+        }
     }
     
     func resetGame() {
         gameState = 0.5
-        totalPlayTime = 0
         setupFirst()
     }
 
@@ -259,7 +276,7 @@ struct GameView: View {
             solveIntervals.append(interval)
         }
         if Int(userInput) == currentQuiz.answer {
-            gameState = min(1.0, gameState + 0.1)
+            gameState = min(1.0, gameState + 0.1) // プレイヤーが押し返す強さ
         }
         startNext()
     }
@@ -267,7 +284,25 @@ struct GameView: View {
     func update() {
         guard !isGameOver && currentDisplayText != "READY" && currentIndex > 0 else { return }
         
-        gameState -= 0.0005
+        // 経過時間を更新
+        totalPlayTime += 0.05
+        
+        // ★ここが分岐点です！★
+        if ghostToBeat == nil {
+            // ▼ シングルモード：時間経過でじわじわ減る（毒沼方式）
+            // 0.0005 は好みの速さに調整してください
+            gameState -= 0.0005
+            
+        } else {
+            // ▼ ゴーストモード：相手が解いた時だけ減る（マリカ方式）
+            if nextGhostIndex < ghostSolveTimestamps.count {
+                if totalPlayTime >= ghostSolveTimestamps[nextGhostIndex] {
+                    // ゴーストのアタック！
+                    gameState -= 0.1 // プレイヤーの回復量と同じにすると公平です
+                    nextGhostIndex += 1
+                }
+            }
+        }
 
         let bW: CGFloat = isPad ? 120 : 30
         let sp: CGFloat = isPad ? 14 : 18
@@ -309,7 +344,6 @@ struct GameView: View {
 }
 
 // MARK: - SorobanTenkey
-// ★これが消えていたためエラーになっていました
 struct SorobanTenkey: View {
     @Binding var userInput: String
     let actionLabel: String
