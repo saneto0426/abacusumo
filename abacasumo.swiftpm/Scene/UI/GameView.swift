@@ -129,56 +129,8 @@ struct GameView: View {
                     .offset(y: isPad ? 0 : 0)
             }
 
-            // 名前入力画面 (ZStackの最後に配置)
-            if showNameInput {
-                Color.black.opacity(0.6).ignoresSafeArea()
-                
-                VStack(spacing: 20) {
-                    Text("勝負あり！")
-                        .font(.custom("Edo SZ", size: 40))
-                        .foregroundColor(.white)
-                        .padding(.top, 20)
-                    
-                    Text("番付に名前を刻め")
-                        .font(.body)
-                        .foregroundColor(.white)
-                    
-                    TextField("名前を入力", text: $inputName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 200)
-                        .padding()
-                        .background(Color.white.opacity(0.8))
-                        .cornerRadius(10)
-                    
-                    Button(action: saveRecord) {
-                        ZStack {
-                            Image("key")
-                                .resizable()
-                                .frame(width: 140, height: 50)
-                            Text("奉 納")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.black)
-                        }
-                    }
-                    .disabled(inputName.isEmpty)
-                    
-                    Button("保存せずに戻る") {
-                        onBack()
-                    }
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .padding(.top, 10)
-                }
-                .padding(30)
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color(UIColor.systemBackground))
-                        .frame(width: 300, height: 350)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 15).stroke(Color.black, lineWidth: 2)
-                        )
-                )
-            }
+//
+            
         } // ZStackここまで
         .onAppear { setupFirst() }
         .onReceive(timer) { _ in update() }
@@ -353,45 +305,5 @@ struct GameView: View {
     }
 }
 
-// MARK: - SorobanTenkey
-struct SorobanTenkey: View {
-    @Binding var userInput: String
-    let actionLabel: String
-    var onAction: () -> Void
-    let isPad: Bool
 
-    let columns = [
-        ["1", "4", "7", "C"],
-        ["2", "5", "8", "0"],
-        ["3", "6", "9", "S"]
-    ]
 
-    var body: some View {
-        HStack(spacing: isPad ? 14 : 5) {
-            ForEach(0..<3) { colIndex in
-                VStack(spacing: isPad ? 0 : 12) {
-                    ForEach(columns[colIndex], id: \.self) { key in
-                        Button(action: {
-                            if key == "S" { onAction() }
-                            else if key == "C" { userInput = "" }
-                            else { userInput += key }
-                        }) {
-                            ZStack {
-                                Image("key")
-                                    .resizable()
-                                    .frame(width: isPad ? 120 : 58, height: isPad ? 88 : 44)
-                                
-                                Text(key == "S" ? actionLabel : key)
-                                    .font(.custom("Papyrus", size: isPad ? 44 : 26))
-                                    .font(.system(size: key == "S" ? (isPad ? 18 : 10) : (isPad ? 28 : 18), weight: .black))
-                                    .foregroundColor(key == "S" ? .green : (key == "C" ? .red : .black))
-                            }
-                            .offset(y: isPad ? 30 : 20)
-                        }
-                    }
-                }
-            }
-        }
-        .offset(y: isPad ? 0 : 20)
-    }
-}
