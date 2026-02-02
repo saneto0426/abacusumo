@@ -38,51 +38,42 @@ struct GameView: View {
 
     var body: some View {
         ZStack {
-            // 背景（これは拡大縮小の「外」に置いて、常に画面いっぱいに広げる）
+            // 背景
             Image(ghostToBeat == nil ? "o_play_screen" : "n_play_screen")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
 
-            // ★ここが変更点！
-            // 記事を参考にした「自動ズーム機能」で中身を包みます
-            FittedScaleView(designWidth: isPad ? 768 : 390) {
-                
-                // ここから下の VStack は「基準サイズ」で作られているつもりで配置されます
-                // 画面がデカければ勝手に拡大され、小さければ縮小されます
-                VStack {
-                    // レイアウト
-                    AbacusLayout(
-                        isPad: isPad,
-                        gameState: gameState,
-                        currentDisplayText: currentDisplayText,
-                        userInput: userInput,
-                        isAnswering: isAnswering,
-                        isGameOver: isGameOver,
-                        showEmptyWarning: showEmptyWarning,
-                        onKeyInput: handleKeyInput
-                    )
-                    
-                    // 戻るボタンの配置
-                    VStack {
-                        HStack {
-                            Button(action: onBack) {
-                                Image("back")
-                                    .resizable().scaledToFit()
-                                    .frame(width: isPad ? 45 : 30)
-                                    .foregroundColor(.white)
-                            }
-                            Spacer()
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, isPad ? 40 : 50)
-                    .padding(.leading, 20)
-                    .opacity(showNameInput ? 0 : 1)
-                }
-            }
+            // ★ここ！ 新しいレイアウトを呼び出すだけ！とてもシンプル
+            AbacusLayout(
+                isPad: isPad,
+                gameState: gameState,
+                currentDisplayText: currentDisplayText,
+                userInput: userInput,
+                isAnswering: isAnswering,
+                isGameOver: isGameOver,
+                showEmptyWarning: showEmptyWarning,
+                onKeyInput: handleKeyInput
+            )
 
-            // 名前入力は最前面に（これもスケールさせたい場合はFittedScaleViewの中に入れてもOK）
+            // 戻るボタン
+            VStack {
+                HStack {
+                    Button(action: onBack) {
+                        Image("back")
+                            .resizable().scaledToFit()
+                            .frame(width: isPad ? 45 : 30)
+                            .foregroundColor(.white)
+                    }
+                    Spacer()
+                }
+                Spacer()
+            }
+            .padding(.top, isPad ? 40 : 50)
+            .padding(.leading, 20)
+            .opacity(showNameInput ? 0 : 1)
+           
+            // 名前入力オーバーレイ
             if showNameInput {
                 NameInputView(
                     inputName: $inputName,
@@ -142,6 +133,7 @@ struct GameView: View {
         showEmptyWarning = false
         lastProblemStartTime = Date()
         
+        // ★マリカ方式の初期化
         totalPlayTime = 0
         ghostSolveTimestamps = []
         nextGhostIndex = 0

@@ -22,15 +22,13 @@ struct AbacusLayout: View {
             let w = geo.size.width
             let h = geo.size.height
             
-            // ★ベース幅の定義 (iPad: 60%, iPhone: 92%)
-            // この数字をいじるだけで全体のサイズが変わります
-            let baseW = w * (isPad ? 0.60 : 0.92)
+            // 基準サイズ
+            let baseW = w * (isPad ? 0.65 : 0.95)
             
-            VStack(spacing: 0) {
-                // (A) 上の余白
-                Spacer().frame(height: h * (isPad ? 0.15 : 0.12))
+            // ★ 全体を ZStack (レイヤー重ね) で自由に配置する方式 ★
+            ZStack {
                 
-                // (B) 掲示板
+                // --- 【レイヤー1】 掲示板 (一番上) ---
                 ZStack {
                     Image("board")
                         .resizable().scaledToFit()
@@ -42,11 +40,12 @@ struct AbacusLayout: View {
                         .offset(y: baseW * 0.02)
                 }
                 .frame(height: baseW * 0.4)
-                .zIndex(0)
+                // 位置指定: 上の方へ (-0.55 くらいが丁度いい位置です)
+                .offset(y: -baseW * 0.55)
                 
-                // (C) 力士
+                
+                // --- 【レイヤー2】 力士 (掲示板と枠の間) ---
                 ZStack {
-                    Color.clear.frame(height: baseW * 0.01)
                     if currentDisplayText == "READY" || isGameOver {
                         HStack(spacing: baseW * 0.18) {
                             Image("sumo_rikishi_harite2")
@@ -61,39 +60,46 @@ struct AbacusLayout: View {
                             .offset(x: baseW * CGFloat(gameState - 0.5))
                     }
                 }
-                .padding(.bottom, baseW * -0.06)
-                .zIndex(2)
+                // 位置指定: ちょっと上 (-0.2 くらい)
+                .offset(y: -baseW * 0.2)
                 
-                // (D) 枠とゲージ
+                
+                // --- 【レイヤー3】 枠とゲージ (真ん中) ---
                 ZStack {
-                    Image("frame")
-                        .resizable().scaledToFit().frame(width: baseW)
+                    // ★ ここでフレームをデカく設定 (1.3倍)
+                    let frameW = baseW * 1.3
                     
-                    HStack(spacing: baseW * 0.025) {
-                        let beadSize = baseW * 0.13
+                    Image("frame")
+                        .resizable().scaledToFit()
+                        .frame(width: frameW)
+                    
+                    HStack(spacing: frameW * 0.025) {
+                        let beadSize = frameW * 0.13
                         ForEach(0..<5) { i in
                             Image("key").resizable().scaledToFit()
                                 .frame(width: beadSize)
                                 .colorMultiply(gameState > (Double(i + 1) * 0.16) ? .white : .black)
                         }
                     }
-                    .offset(y: baseW * 0.065)
+                    // フレーム内での玉の位置調整
+                    .offset(y: frameW * 0.065)
                 }
-                .zIndex(1)
+                // 位置指定: 画面中央より少し下 (+0.15 くらい)
+                .offset(y: baseW * 0.15)
                 
-                // (E) テンキー配置
-                // 枠の幅(baseW)をSorobanTenkeyに渡して、完璧なサイズで描画させます
+                
+                // --- 【レイヤー4】 テンキー (一番下) ---
                 SorobanTenkey(
                     baseW: baseW,
                     isGameOver: isGameOver,
                     isAnswering: isAnswering,
                     onAction: onKeyInput
                 )
-                .padding(.top, baseW * 0.03)
+                // 位置指定: 枠の下 (+0.7 くらい)
+                .offset(y: baseW * 0.7)
                 
-                Spacer()
             }
-            .frame(width: w)
+            .frame(width: w, height: h) // 画面いっぱいに広げる
         }
     }
 }
