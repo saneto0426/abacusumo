@@ -40,9 +40,11 @@ struct GameView: View {
         ZStack {
             // 背景
             Image(ghostToBeat == nil ? "o_play_screen" : "n_play_screen")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+            .clipped()
+            .ignoresSafeArea()
 
             // ★ここ！ 新しいレイアウトを呼び出すだけ！とてもシンプル
             AbacusLayout(

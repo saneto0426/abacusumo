@@ -21,9 +21,17 @@ struct AbacusLayout: View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
-            
-            // 基準サイズ
-            let baseW = w * (isPad ? 0.65 : 0.95)
+                        
+            // ★ここを修正（魔法の3行）
+            // 1. 横幅から計算したサイズ（今まで通り）
+            let widthBase = w * (isPad ? 0.7 : 0.95)
+                        
+            // 2. 高さから計算したサイズ（13インチ対策：縦にはみ出さない限界値）
+            let heightBase = h * (isPad ? 0.49 : 0.85)
+                        
+            // 3. 小さい方を採用！
+            // これで「11インチは横幅ピッタリ」「13インチは高さピッタリ」になります
+            let baseW = min(widthBase, heightBase)
             
             // ★ 全体を ZStack (レイヤー重ね) で自由に配置する方式 ★
             ZStack {
@@ -49,32 +57,33 @@ struct AbacusLayout: View {
                     if currentDisplayText == "READY" || isGameOver {
                         HStack(spacing: baseW * 0.18) {
                             Image("sumo_rikishi_harite2")
-                                .resizable().scaledToFit().frame(width: baseW * 0.28)
+                                .resizable().scaledToFit().frame(width: baseW * 0.28).offset(y: baseW * 0.475)
                             Image("sumo_rikishi_harite2")
-                                .resizable().scaledToFit().frame(width: baseW * 0.28).scaleEffect(x: -1)
+                                .resizable().scaledToFit().frame(width: baseW * 0.28).scaleEffect(x: -1).offset(y: baseW * 0.475)
                         }
                     } else {
                         Image("sumo_torikumi")
                             .resizable().scaledToFit()
+                            .offset(y: baseW * 0.5)
                             .frame(width: baseW * 0.35)
                             .offset(x: baseW * CGFloat(gameState - 0.5))
                     }
                 }
                 // 位置指定: ちょっと上 (-0.2 くらい)
-                .offset(y: -baseW * 0.2)
+                .offset(y: -baseW * 0.5)
                 
                 
                 // --- 【レイヤー3】 枠とゲージ (真ん中) ---
                 ZStack {
                     // ★ ここでフレームをデカく設定 (1.3倍)
-                    let frameW = baseW * 1.3
+                    let frameW = baseW * 1.325
                     
                     Image("frame")
                         .resizable().scaledToFit()
                         .frame(width: frameW)
                     
-                    HStack(spacing: frameW * 0.025) {
-                        let beadSize = frameW * 0.13
+                    HStack(spacing: frameW * 0.0275) {
+                        let beadSize = frameW * 0.15
                         ForEach(0..<5) { i in
                             Image("key").resizable().scaledToFit()
                                 .frame(width: beadSize)
@@ -82,10 +91,10 @@ struct AbacusLayout: View {
                         }
                     }
                     // フレーム内での玉の位置調整
-                    .offset(y: frameW * 0.065)
+                    .offset(y: frameW * -0.225)
                 }
                 // 位置指定: 画面中央より少し下 (+0.15 くらい)
-                .offset(y: baseW * 0.15)
+                .offset(y: baseW * 0.525)
                 
                 
                 // --- 【レイヤー4】 テンキー (一番下) ---
