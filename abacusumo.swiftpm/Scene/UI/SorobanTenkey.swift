@@ -38,7 +38,7 @@ struct SorobanTenkey: View {
                                 Image("key")
                                     .resizable().scaledToFit()
                                     .frame(width: baseW * 0.2)
-                                    .offset(y: -baseW * 0.065)// ボタンサイズも相対指定
+                                    .offset(y: -baseW * 0.08)// ボタンサイズも相対指定
                                     
                                 
                                 // ラベルの出し分け
@@ -49,12 +49,33 @@ struct SorobanTenkey: View {
                                     .font(.custom("Papyrus", size: baseW * 0.08)) // フォントサイズも自動
                                     .font(.system(size: key == "S" ? baseW * 0.04 : baseW * 0.08, weight: .black))
                                     .foregroundColor(labelColor)
-                                    .offset(y: -baseW * 0.065)
+                                    .offset(y: -baseW * 0.07)
                             }
+                            // 当たり判定のサイズ調整（お好みで調整してください）
+                            .frame(width: baseW * 0.18, height: baseW * 0.14)
+                                    
+                                    // ★「ひし形」の範囲だけ押せるようにします
+                            .contentShape(Diamond())
                         }
                     }
                 }
             }
         }
+    }
+}
+// ひし形（ダイヤ型）の定義
+struct Diamond: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        // 上
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        // 右
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        // 下
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        // 左
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.closeSubpath()
+        return path
     }
 }
