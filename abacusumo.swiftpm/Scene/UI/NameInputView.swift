@@ -16,7 +16,7 @@ struct NameInputView: View {
         Color.black.opacity(0.6).ignoresSafeArea()
         
         VStack(spacing: 20) {
-            Text("勝負あり！")
+            Text("Finish!")
                 .font(.custom("Edo SZ", size: 40))
                 .foregroundColor(.white)
                 .padding(.top, 20)
@@ -37,14 +37,14 @@ struct NameInputView: View {
                     Image("key")
                         .resizable()
                         .frame(width: 140, height: 50)
-                    Text("奉 納")
+                    Text("Enter")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.black)
                 }
             }
             .disabled(inputName.isEmpty)
             
-            Button("保存せずに戻る") {
+            Button("Back") {
                 onCancel()
             }
             .font(.caption)
