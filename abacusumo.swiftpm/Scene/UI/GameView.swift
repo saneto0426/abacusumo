@@ -103,26 +103,39 @@ struct GameView: View {
     // --- ロジック部分 (変更なし) ---
     
     func handleKeyInput(_ key: String) {
-        if showNameInput { return }
-       
-        if key == "S" {
-            if isGameOver {
-                resetGame()
-            } else if isAnswering {
-                if userInput.isEmpty {
-                    if showEmptyWarning { startNext() } else { showEmptyWarning = true }
+            if showNameInput { return }
+           
+            // Sボタン（進行ボタン）の処理
+            if key == "S" {
+                if isGameOver {
+                    resetGame()
+                } else if isAnswering {
+                    if userInput.isEmpty {
+                        if showEmptyWarning { startNext() } else { showEmptyWarning = true }
+                    } else {
+                        check()
+                    }
                 } else {
-                    check()
+                    nextStep()
                 }
-            } else {
-                nextStep()
+                return // Sボタンの処理が終わったらここで抜ける
             }
-        } else if key == "C" {
-            userInput = ""
-        } else {
-            userInput += key
+            
+            // ★ここに追加！
+            // 回答モード（isAnswering）じゃない時は、ここで無視して終了！
+            // これで問題表示中に数字を押しても反応しなくなります
+            if !isAnswering { return }
+
+            // 数字とCボタンの処理
+            if key == "C" {
+                userInput = ""
+            } else {
+                // 桁数制限（例: 8桁まで）を入れるとさらに親切です
+                if userInput.count < 8 {
+                    userInput += key
+                }
+            }
         }
-    }
     
     func setupFirst() {
         currentQuiz = generator.makeQuiz(config: config)

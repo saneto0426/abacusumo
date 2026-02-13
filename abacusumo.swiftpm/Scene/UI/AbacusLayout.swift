@@ -91,10 +91,10 @@ struct AbacusLayout: View {
                         }
                     }
                     // フレーム内での玉の位置調整
-                    .offset(y: frameW * -0.225)
+                    .offset(y: frameW * -0.275)
                 }
                 // 位置指定: 画面中央より少し下 (+0.15 くらい)
-                .offset(y: baseW * 0.525)
+                .offset(y: baseW * 0.58)
                 
                 
                 // --- 【レイヤー4】 テンキー (一番下) ---
@@ -107,6 +107,13 @@ struct AbacusLayout: View {
                 // 位置指定: 枠の下 (+0.7 くらい)
                 .offset(y: baseW * 0.7)
                 
+                Image("backFrame") // ← 用意した画像の名前
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                    .clipped()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
             .frame(width: w, height: h) // 画面いっぱいに広げる
         }
