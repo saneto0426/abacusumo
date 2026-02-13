@@ -27,9 +27,22 @@ struct SorobanTenkey: View {
     var body: some View {
         // 3列のボタン配置
         // baseW を基準に隙間などを計算することで、上の枠とピッタリ合います
-        HStack(spacing: baseW * 0.035) {
+        HStack(spacing: baseW * 0.05) {
+            VStack {
+                            // 上下にSpacerを入れると、画像が上下中央に来ます
+                            Spacer()
+                            
+                            Image("keys") // ← 左側に置きたい画像の名前
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: baseW * 0.18) // 幅の調整 (0.2〜0.3くらいで調整)
+                                .offset(y: -baseW * 0.165)   // 位置の微調整
+                            
+                            Spacer()
+                        }.frame(height: baseW * 0.8) // エリアの高さを確保
+            
             ForEach(0..<3) { col in
-                VStack(spacing: baseW * 0.01) {
+                VStack(spacing: baseW * 0.015) {
                     ForEach(columns[col], id: \.self) { key in
                         Button(action: {
                             onAction(key)
@@ -37,7 +50,7 @@ struct SorobanTenkey: View {
                             ZStack {
                                 Image("key")
                                     .resizable().scaledToFit()
-                                    .frame(width: baseW * 0.2)
+                                    .frame(width: baseW * 0.2, height: baseW * 0.2)
                                     .offset(y: -baseW * 0.08)// ボタンサイズも相対指定
                                     
                                 
@@ -60,6 +73,18 @@ struct SorobanTenkey: View {
                     }
                 }
             }
+            VStack {
+                            Spacer()
+                            
+                            Image("keys") // ← 右側に置きたい画像の名前
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: baseW * 0.18) // 幅の調整
+                                .offset(y: -baseW * 0.165)   // 位置の微調整
+                            
+                            Spacer()
+                        }
+                        .frame(height: baseW * 0.8)
         }
     }
 }
