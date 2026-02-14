@@ -88,10 +88,7 @@ struct ModeSelectView: View {
 
     // ★ モード名を英語に変換しますわ
     func modeName(_ mode: GameMode) -> String {
-        switch mode {
-        case .addition: return "ADDITION"
-        case .multiplication: return "MULTIPLICATION"
-        case .division: return "DIVISION"
-        }
+    return "ADDITION"
+    
     }
 }

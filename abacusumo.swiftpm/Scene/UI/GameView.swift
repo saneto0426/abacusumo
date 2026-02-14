@@ -86,18 +86,15 @@ struct GameView: View {
         }
         .onAppear { setupFirst() }
         .onReceive(timer) { _ in update() }
-        .onChange(of: userInput) { _ in
+        // 引数を取らない書き方に変える
+        .onChange(of: userInput) {
             if !userInput.isEmpty { showEmptyWarning = false }
         }
     }
     
     // Generatorの定義
     var generator: ProblemGeneratable {
-        if config.mode == .addition {
-            return SimpleProblemGenerator()
-        } else {
-            return MultiProblemGenerator()
-        }
+        return SimpleProblemGenerator()
     }
 
     // --- ロジック部分 (変更なし) ---
@@ -184,7 +181,18 @@ struct GameView: View {
     
     func check() {
         if let startTime = lastProblemStartTime { solveIntervals.append(Date().timeIntervalSince(startTime)) }
-        if Int(userInput) == currentQuiz.answer { gameState = min(1.0, gameState + 0.1) }
+        if Int(userInput) == currentQuiz.answer {
+            
+            gameState = min(1.0, gameState + 0.2)
+            
+            if gameState >= 1.0 {
+                            isGameOver = true
+                            currentDisplayText = "WIN!"
+                            showNameInput = true
+                            return // ここで終了して、次の問題には進まない
+                        }
+        }
+        
         startNext()
     }
     

@@ -9,25 +9,27 @@ import SwiftData
 
 @main
 struct MyApp: App {
-    // SwiftDataの入れ物（Container）
+    // データベースの入れ物
     let container: ModelContainer
 
     init() {
         do {
-            // 保存するモデル（GhostRecord）を登録
+            // ★ここが超重要！
+            // "Item.self" ではなく "GhostRecord.self" になっていますか？
+            // これがないと保存時にクラッシュします。
             container = try ModelContainer(for: GhostRecord.self)
         } catch {
-            fatalError("SwiftDataの初期化に失敗: \(error)")
+            fatalError("SwiftDataの初期化に失敗しました: \(error)")
         }
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                // アプリ全体で使うManagerに、データベースへの窓口（context）を渡して注入
+                // Managerにデータベースへの鍵(mainContext)を渡して、アプリ全体に配る
                 .environmentObject(GhostManager(modelContext: container.mainContext))
         }
-        // これでアプリ全体がSwiftDataを使える状態になる
+        // ここも GhostRecord.self が含まれているコンテナを指定
         .modelContainer(container)
     }
 }
