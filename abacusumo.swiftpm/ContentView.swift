@@ -1,6 +1,7 @@
 
 
 import SwiftUI
+import SwiftData
 
 
 enum AppScreen {
@@ -12,7 +13,8 @@ enum AppScreen {
 }
 
 struct ContentView: View {
-    @StateObject var ghostManager = GhostManager()
+//    StateObject var ghostManager = GhostManager()
+    @EnvironmentObject var ghostManager: GhostManager
     @State private var currentScreen: AppScreen = .title
 
     var body: some View {
