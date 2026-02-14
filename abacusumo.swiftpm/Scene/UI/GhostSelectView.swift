@@ -85,7 +85,7 @@ struct GhostSelectView: View {
                             contentHeight = contentGeo.size.height
                             containerHeight = geo.size.height
                         }
-                        .onChange(of: contentGeo.frame(in: .named("scroll")).minY) { newValue in
+                        .onChange(of: contentGeo.frame(in: .named("scroll")).minY) { _, newValue in
                             scrollOffset = newValue
                         }
                     })
@@ -143,7 +143,11 @@ struct GhostSelectView: View {
     }
 
     func recoverConfig(from record: GhostRecord) -> LevelConfig {
-        let digits = record.configLabel.compactMap { Int(String($0)) }
-        return LevelConfig(mode: mode, digits: digits.first ?? 1, digitsRight: digits.last ?? 1)
-    }
+            // ラベルから数字だけを取り出す
+            let digits = record.configLabel.compactMap { Int(String($0)) }
+            
+            // 修正点: digitsRight: ... の部分を削除しました
+            // mode と digits だけ渡せばOKです
+            return LevelConfig(mode: mode, digits: digits.first ?? 1)
+        }
 }

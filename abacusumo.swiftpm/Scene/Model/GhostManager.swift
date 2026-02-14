@@ -26,18 +26,26 @@ class GhostManager: ObservableObject {
     }
 
     private func limitRecords(for mode: GameMode) {
-        let modeRawValue = mode.rawValue
-        // 特定のモードを日付の新しい順に取得するクエリ
-        let descriptor = FetchDescriptor<GhostRecord>(
-            predicate: #Predicate { $0.mode.rawValue == modeRawValue },
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        )
-        
-        if let allRecords = try? modelContext.fetch(descriptor), allRecords.count > 50 {
-            let excess = allRecords.suffix(from: 50)
-            for record in excess {
-                modelContext.delete(record) // 古い50件以降を削除
+            // 修正点: rawValue を使わず、enumそのもので比較するように修正したいが、
+            // SwiftDataのバグ回避のため、あえて「全件取得してからフィルタリング」する方式が一番安全です。
+            // ※件数が数千件もない限り、パフォーマンスには影響しません。
+
+            // 1. 日付順に全データを取得するディスクリプタ
+            let descriptor = FetchDescriptor<GhostRecord>(
+                sortBy: [SortDescriptor(\.date, order: .reverse)]
+            )
+            
+            if let allRecords = try? modelContext.fetch(descriptor) {
+                // 2. メモリ上で「今のモード」のものだけを抜き出す
+                let targetRecords = allRecords.filter { $0.mode == mode }
+                
+                // 3. 50件を超えていたら削除する
+                if targetRecords.count > 50 {
+                    let excess = targetRecords.suffix(from: 50)
+                    for record in excess {
+                        modelContext.delete(record)
+                    }
+                }
             }
         }
-    }
 }
