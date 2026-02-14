@@ -1,47 +1,53 @@
-
-
 import SwiftUI
 import SwiftData
 
-
+// 画面の遷移状態（modeSelect を削除しました）
 enum AppScreen {
     case title
-    case modeSelect(isGhostMode: Bool)
     case digitSelect(mode: GameMode)
     case ghostSelect(mode: GameMode)
     case game(config: LevelConfig, ghost: GhostRecord?)
 }
 
 struct ContentView: View {
-//    StateObject var ghostManager = GhostManager()
+    // MyAppから渡されたManagerを受け取る
     @EnvironmentObject var ghostManager: GhostManager
+    
     @State private var currentScreen: AppScreen = .title
 
     var body: some View {
         ZStack {
             switch currentScreen {
             case .title:
-                TitleView(onStart: { _ in currentScreen = .modeSelect(isGhostMode: false) },
-                          onGhostMode: { currentScreen = .modeSelect(isGhostMode: true) })
-                
-            case .modeSelect(let isGhost):
-                ModeSelectView(isGhostMode: isGhost) { mode in
-                    if isGhost {
-                        currentScreen = .ghostSelect(mode: mode)
-                    } else {
-                        currentScreen = .digitSelect(mode: mode)
+                TitleView(
+                    // ★変更点1: スタートボタンで、いきなり桁数選択へ（モードは .addition 固定）
+                    onStart: { _ in
+                        currentScreen = .digitSelect(mode: .addition)
+                    },
+                    // ★変更点2: ゴーストボタンで、いきなりゴースト一覧へ
+                    onGhostMode: {
+                        currentScreen = .ghostSelect(mode: .addition)
                     }
-                } onBack: { currentScreen = .title }
-
+                )
+                
+            // ★ modeSelect のケースは削除しました
+                
             case .digitSelect(let mode):
                 ProblemSelectView(mode: mode) { config in
                     currentScreen = .game(config: config, ghost: nil)
-                } onBack: { currentScreen = .modeSelect(isGhostMode: false) }
+                } onBack: {
+                    // ★変更点3: 戻るときはタイトルへ
+                    currentScreen = .title
+                }
 
             case .ghostSelect(let mode):
-                GhostSelectView(ghostManager: ghostManager, mode: mode) { config, ghost in
+                // ★修正: 引数から ghostManager を削除（GhostSelectView側で @Query を使うため不要）
+                GhostSelectView(mode: mode) { config, ghost in
                     currentScreen = .game(config: config, ghost: ghost)
-                } onBack: { currentScreen = .modeSelect(isGhostMode: true) }
+                } onBack: {
+                    // ★変更点4: 戻るときはタイトルへ
+                    currentScreen = .title
+                }
 
             case .game(let config, let ghost):
                 GameView(ghostManager: ghostManager, config: config, ghostToBeat: ghost) {

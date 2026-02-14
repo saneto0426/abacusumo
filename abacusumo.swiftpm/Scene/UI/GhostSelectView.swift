@@ -13,7 +13,7 @@ struct GhostSelectView: View {
     @Query(sort: \GhostRecord.date, order: .reverse) private var allRecords: [GhostRecord]
     
     // 前の画面から受け取るもの
-    @ObservedObject var ghostManager: GhostManager
+//    @ObservedObject var ghostManager: GhostManager
     let mode: GameMode
     var onSelect: (LevelConfig, GhostRecord) -> Void
     var onBack: () -> Void
