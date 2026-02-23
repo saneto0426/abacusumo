@@ -9,11 +9,8 @@ import SwiftUI
 import SwiftData // ★これを忘れずに！
 
 struct GhostSelectView: View {
-    // データベースから「日付の新しい順」に全データを自動取得します
     @Query(sort: \GhostRecord.date, order: .reverse) private var allRecords: [GhostRecord]
     
-    // 前の画面から受け取るもの
-//    @ObservedObject var ghostManager: GhostManager
     let mode: GameMode
     var onSelect: (LevelConfig, GhostRecord) -> Void
     var onBack: () -> Void
@@ -22,82 +19,108 @@ struct GhostSelectView: View {
     @State private var contentHeight: CGFloat = 0
     @State private var containerHeight: CGFloat = 0
 
+    // フィルタリングした結果を計算プロパティにするとスッキリします
+    private var filteredRecords: [GhostRecord] {
+        allRecords.filter { $0.mode == mode }
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .trailing) {
+                // 1. 全体の背景色（レコード有無にかかわらず黒）
                 Color.black.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 0) {
+                if filteredRecords.isEmpty {
+                    // --- レコードがない時の表示 ---
+                    VStack(spacing: 30) {
+                        Spacer()
                         
-                        // 1. 巻物の上
-                        Image("makimono_bottom")
+                        // ここにお好きなイラストを表示
+                        Image("NoRecords") // ← 用意したイラスト名に変更
                             .resizable()
                             .scaledToFit()
-                            .scaleEffect(y: -1)
-                            .frame(width: geo.size.width)
+                            .frame(width: geo.size.width * 0.6)
+                            .opacity(0.7)
 
-                        // 2. 巻物の中身
-                        VStack(spacing: 20) {
-                            Text("[ GHOST SELECT : \(mode.rawValue.uppercased()) ]")
-                                .font(.custom("Edo SZ", size: geo.size.width > 600 ? 35 : 24))
-                                .fontWeight(.black)
-                                .padding(.top, 10)
+                      
 
-                            // ★ここが修正ポイント！
-                            // Managerからではなく、@Queryで取った allRecords からフィルタリングします
-                            let filteredRecords = allRecords.filter { $0.mode == mode }
+                        Button(action: onBack) {
+                            ZStack {
+                                Image("key").resizable().frame(width: 140, height: 55)
+                                Text("BACK").font(.system(size: 18, weight: .bold)).foregroundColor(.black)
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(width: geo.size.width)
+                    .background(Image("makimono_no").resizable().aspectRatio(contentMode: .fill))
 
-                            if filteredRecords.isEmpty {
-                                Text("NO RECORDS FOUND")
-                                    .font(.custom("Papyrus", size: 20))
-                                    .padding(.vertical, 100)
-                            } else {
+                } else {
+                    // --- レコードがある時の表示（元の巻物デザイン） ---
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            // 巻物の上
+                            Image("makimono_bottom")
+                                .resizable()
+                                .scaledToFit()
+                                .scaleEffect(y: -1)
+                                .frame(width: geo.size.width)
+
+                            // 巻物の中身
+                            VStack(spacing: 20) {
+                                Text("[ GHOST SELECT : \(mode.rawValue.uppercased()) ]")
+                                    .font(.custom("Edo SZ", size: geo.size.width > 600 ? 35 : 24))
+                                    .fontWeight(.black)
+                                    .padding(.top, 10)
+
                                 ForEach(filteredRecords) { record in
                                     ghostRecordButton(record, screenWidth: geo.size.width)
                                 }
-                            }
 
-                            Button(action: onBack) {
-                                ZStack {
-                                    Image("key").resizable().frame(width: 140, height: 55)
-                                    Text("BACK").font(.system(size: 18, weight: .bold)).foregroundColor(.black)
+                                Button(action: onBack) {
+                                    ZStack {
+                                        Image("key").resizable().frame(width: 140, height: 55)
+                                        Text("BACK").font(.system(size: 18, weight: .bold)).foregroundColor(.black)
+                                    }
                                 }
+                                .padding(.vertical, 30)
                             }
-                            .padding(.vertical, 30)
-                        }
-                        .padding(.horizontal, geo.size.width * 0.1)
-                        .frame(width: geo.size.width)
-                        .background(
-                            Image("makimono_middle")
-                                .resizable()
-                                .offset(x: geo.size.width > 600 ? 0 : 2)
-                        )
-
-                        // 3. 巻物の下
-                        Image("makimono_bottom")
-                            .resizable()
-                            .scaledToFit()
+                            .padding(.horizontal, geo.size.width * 0.1)
                             .frame(width: geo.size.width)
-                    }
-                    .background(GeometryReader { contentGeo in
-                        Color.clear.onAppear {
-                            contentHeight = contentGeo.size.height
-                            containerHeight = geo.size.height
-                        }
-                        .onChange(of: contentGeo.frame(in: .named("scroll")).minY) { _, newValue in
-                            scrollOffset = newValue
-                        }
-                    })
-                }
-                .coordinateSpace(name: "scroll")
-                .ignoresSafeArea()
+                            .frame(minHeight: geo.size.height - (geo.size.width * 0.2))
+                            .background(
+                                Image("makimono_middle")
+                                    .resizable()
+                                    .offset(x: geo.size.width > 600 ? 0 : 2)
+                            )
 
-                rulerIndicator(screenHeight: geo.size.height)
+                            // 巻物の下
+                            Image("makimono_bottom")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: geo.size.width)
+                        }
+                        .background(GeometryReader { contentGeo in
+                            Color.clear.onAppear {
+                                contentHeight = contentGeo.size.height
+                                containerHeight = geo.size.height
+                            }
+                            .onChange(of: contentGeo.frame(in: .named("scroll")).minY) { _, newValue in
+                                scrollOffset = newValue
+                            }
+                        })
+                    }
+                    .coordinateSpace(name: "scroll")
+                    .ignoresSafeArea()
+
+                    // 右側のインジケーター（レコードがある時だけ表示）
+                    rulerIndicator(screenHeight: geo.size.height)
+                }
             }
         }
     }
-    
+
     // --- 以下、ボタンやデザインの関数はそのままでOK ---
     
     private func ghostRecordButton(_ record: GhostRecord, screenWidth: CGFloat) -> some View {
