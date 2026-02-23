@@ -56,17 +56,19 @@ struct AbacusLayout: View {
                 ZStack {
                     if currentDisplayText == "READY" || isGameOver {
                         HStack(spacing: baseW * 0.18) {
-                            Image("sumo_rikishi_harite2")
-                                .resizable().scaledToFit().frame(width: baseW * 0.28).offset(y: baseW * 0.475)
-                            Image("sumo_rikishi_harite2")
-                                .resizable().scaledToFit().frame(width: baseW * 0.28).scaleEffect(x: -1).offset(y: baseW * 0.475)
+                            Image("Player_rabbit")
+                                .resizable().scaledToFit().frame(width: baseW * 0.4).offset(y: baseW * 0.43)
+                            Image("Frog")
+                                .resizable().scaledToFit().frame(width: baseW * 0.4).offset(y: baseW * 0.43)
                         }
                     } else {
-                        Image("sumo_torikumi")
+                        Image("Battle")
                             .resizable().scaledToFit()
-                            .offset(y: baseW * 0.5)
-                            .frame(width: baseW * 0.35)
+                            .offset(y: baseW * 0.42)
+                            .frame(width: baseW * 0.4)
                             .offset(x: baseW * CGFloat(gameState - 0.5))
+                            .animation(.interpolatingSpring(stiffness: 120, damping: 12), value: gameState)
+                                
                     }
                 }
                 // 位置指定: ちょっと上 (-0.2 くらい)
@@ -82,7 +84,7 @@ struct AbacusLayout: View {
                         .resizable().scaledToFit()
                         .frame(width: frameW)
                     
-                    HStack(spacing: frameW * 0.0275) {
+                    HStack(spacing: frameW * 0.025) {
                         let beadSize = frameW * 0.15
                         ForEach(0..<5) { i in
                             Image("key").resizable().scaledToFit()
