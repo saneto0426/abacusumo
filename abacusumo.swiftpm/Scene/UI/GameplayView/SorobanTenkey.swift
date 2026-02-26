@@ -68,11 +68,11 @@ struct SorobanTenkey: View {
                             }
                             // ★修正ポイント: ここで当たり判定のサイズを決める
                             .frame(width: baseW * 0.18, height: baseW * 0.14)
-                            .overlay(
-                                    Diamond()
-                                        .fill(Color.red.opacity(0.5)) // 半透明の赤
-                                        .allowsHitTesting(false)      // デバッグ表示がタップを邪魔しないように
-                                )
+//                            .overlay(
+//                                    Diamond()
+////                                        .fill(Color.red.opacity(0.5)) // 半透明の赤
+//                                        .allowsHitTesting(false)      // デバッグ表示がタップを邪魔しないように
+//                                )
                             
                             // ★修正ポイント: 当たり判定の形を決める
                             .contentShape(Diamond())

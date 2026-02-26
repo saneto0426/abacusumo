@@ -26,10 +26,7 @@ class GhostManager: ObservableObject {
     }
 
     private func limitRecords(for mode: GameMode) {
-            // 修正点: rawValue を使わず、enumそのもので比較するように修正したいが、
-            // SwiftDataのバグ回避のため、あえて「全件取得してからフィルタリング」する方式が一番安全です。
-            // ※件数が数千件もない限り、パフォーマンスには影響しません。
-
+           
             // 1. 日付順に全データを取得するディスクリプタ
             let descriptor = FetchDescriptor<GhostRecord>(
                 sortBy: [SortDescriptor(\.date, order: .reverse)]

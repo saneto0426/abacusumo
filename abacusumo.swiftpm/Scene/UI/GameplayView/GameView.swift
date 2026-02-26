@@ -28,7 +28,7 @@ struct GameView: View {
     @State private var lastProblemStartTime: Date?
     @State private var solveIntervals: [TimeInterval] = []
     
-    // マリカ方式用
+    //ghost
     @State private var totalPlayTime: TimeInterval = 0
     @State private var ghostSolveTimestamps: [TimeInterval] = []
     @State private var nextGhostIndex = 0
