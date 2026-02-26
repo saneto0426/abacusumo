@@ -40,7 +40,7 @@ struct AbacusLayout: View {
                 ZStack {
                     Image("board")
                         .resizable().scaledToFit()
-                        .frame(width: baseW * 0.7)
+                        .frame(width: baseW * 0.9)
                     
                     Text(isAnswering ? (userInput.isEmpty ? "?" : userInput) : currentDisplayText)
                         .font(.system(size: baseW * 0.12, weight: .black, design: .monospaced))
@@ -58,7 +58,7 @@ struct AbacusLayout: View {
                         HStack(spacing: baseW * 0.18) {
                             Image("Player_rabbit")
                                 .resizable().scaledToFit().frame(width: baseW * 0.4).offset(y: baseW * 0.43)
-                            Image("Frog")
+                            Image("frog")
                                 .resizable().scaledToFit().frame(width: baseW * 0.4).offset(y: baseW * 0.43)
                         }
                     } else {
