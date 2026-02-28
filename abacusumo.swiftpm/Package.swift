@@ -8,38 +8,41 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "Sum-o",
+    name: "Sum-O",
     platforms: [
         .iOS("18.0")
     ],
     products: [
         .iOSApplication(
-            name: "Sum-o",
+            name: "Sum-O",
             targets: ["AppModule"],
             bundleIdentifier: "SanetoMisaki.abacasumo",
             teamIdentifier: "MVLDJ7Z3RA",
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder(icon: .gamepad),
-            accentColor: .presetColor(.brown),
+            appIcon: .asset("AppIcon"),
+            accentColor: .asset("AccentColor"),
             supportedDeviceFamilies: [
                 .pad,
                 .phone
             ],
             supportedInterfaceOrientations: [
                 .portrait,
-                .landscapeRight,
-                .landscapeLeft,
-                .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+//                .landscapeRight,
+//                .landscapeLeft,
+//                .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
             appCategory: .games
         )
     ],
     targets: [
-        .executableTarget(
-            name: "AppModule",
-            path: "."
-        )
-    ],
-    swiftLanguageVersions: [.version("6")]
-)
+            .executableTarget(
+                name: "AppModule",
+                path: ".", // ← ★ここにカンマ（,）を追加しました！
+                resources: [
+                    .process("Resources")
+                ]
+            )
+        ],
+        swiftLanguageVersions: [.version("6")]
+    )

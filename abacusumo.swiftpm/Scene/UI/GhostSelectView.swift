@@ -10,6 +10,7 @@ import SwiftData // ★これを忘れずに！
 
 struct GhostSelectView: View {
     @Query(sort: \GhostRecord.date, order: .reverse) private var allRecords: [GhostRecord]
+    @Environment(\.modelContext) private var modelContext
     
     let mode: GameMode
     var onSelect: (LevelConfig, GhostRecord) -> Void
@@ -19,151 +20,241 @@ struct GhostSelectView: View {
     @State private var contentHeight: CGFloat = 0
     @State private var containerHeight: CGFloat = 0
 
+    @State private var sortOption: RecordSortOption = .newest
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+    
     // フィルタリングした結果を計算プロパティにするとスッキリします
+    // ★ 2. フィルタリング後に、選択された条件でソートする
     private var filteredRecords: [GhostRecord] {
-        allRecords.filter { $0.mode == mode }
-    }
+        let baseRecords = allRecords.filter { $0.mode == mode }
+            
+        switch sortOption {
+        case .newest:
+            return baseRecords.sorted { $0.date > $1.date }
+        case .oldest:
+            return baseRecords.sorted { $0.date < $1.date }
+        case .fastest:
+                // 合計タイムを計算して短い順（速い順）に並べる
+            return baseRecords.sorted {
+        $0.solveIntervals.reduce(0, +) < $1.solveIntervals.reduce(0, +)
+                }
+            }
+        }
 
     var body: some View {
         GeometryReader { geo in
-            ZStack(alignment: .trailing) {
-                // 1. 全体の背景色（レコード有無にかかわらず黒）
-                Color.black.ignoresSafeArea()
-
+            ZStack() {
+                
                 if filteredRecords.isEmpty {
-                    // --- レコードがない時の表示 ---
-                    VStack(spacing: 30) {
-                        Spacer()
+                                    // --- レコードがない時の表示 ---
+                                    
+                    // ★ ZStackを使って「左上」基準で画面全体に配置する
+                    ZStack(alignment: .topLeading) {
                         
-                        // ここにお好きなイラストを表示
-                        Image("NoRecords") // ← 用意したイラスト名に変更
+                        // 1. 中央のイラスト（と専用背景）
+                        VStack {
+                            Spacer()
+                            Image("NoRecords") // お化けのイラスト
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: geo.size.width * 0.5) // サイズはここで微調整
+                                .opacity(0.7)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity) // 画面全体に広げる
+                        
+                        // 2. 戻るボタン（レコードがある時と全く同じサイズ・位置に固定！）
+                        .overlay(alignment: .topLeading) {
+                            Button(action: onBack) {
+                                ZStack {
+                                    Image("back") // 戻るアイコン
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: isPad ? 45 : 18, height: isPad ? 45 : 18)
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            // GameViewと位置を合わせるためのパディング
+                            .padding(.top, isPad ? 40 : 50)
+                            .padding(.leading, 20)
+                        }
+                    }
+                                    
+                                } else {
+                    // --- レコードがある時の表示（セーブスロット形式） ---
+                    
+                    // ★ 1. 全体を固定するためのVStack（ScrollViewから変更）
+                    VStack(spacing: 0) {
+                        
+                      
+                        // --- 固定の巻物ヘッダー ---
+                        Image("makimono_head")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: geo.size.width * 0.6)
-                            .opacity(0.7)
-
-                      
-
-                        Button(action: onBack) {
-                            ZStack {
-                                Image("key").resizable().frame(width: 140, height: 55)
-                                Text("BACK").font(.system(size: 18, weight: .bold)).foregroundColor(.black)
-                            }
-                        }
-                        
-                        Spacer()
-                    }
-                    .frame(width: geo.size.width)
-                    .background(Image("makimono_no").resizable().aspectRatio(contentMode: .fill))
-
-                } else {
-                    // --- レコードがある時の表示（元の巻物デザイン） ---
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            // 巻物の上
-                            Image("makimono_bottom")
-                                .resizable()
-                                .scaledToFit()
-                                .scaleEffect(y: -1)
-                                .frame(width: geo.size.width)
-
-                            // 巻物の中身
-                            VStack(spacing: 20) {
-                                Text("[ GHOST SELECT : \(mode.rawValue.uppercased()) ]")
-                                    .font(.custom("Edo SZ", size: geo.size.width > 600 ? 35 : 24))
-                                    .fontWeight(.black)
-                                    .padding(.top, 10)
-
-                                ForEach(filteredRecords) { record in
-                                    ghostRecordButton(record, screenWidth: geo.size.width)
-                                }
-
+                            .frame(width: geo.size.width)
+                            .overlay(alignment: .topLeading) {
+                                // 戻るボタン（既存のまま）
                                 Button(action: onBack) {
+                                    Image("back")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: isPad ? 45 : 30)
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.top, isPad ? 40 : 50)
+                                .padding(.leading, 20)
+                            }
+                            .overlay(alignment: .topTrailing) {
+                                // ★ ソートボタンのサイズ設定
+                                let btnW: CGFloat = isPad ? 120 : 100 // 横幅
+                                let btnH: CGFloat = isPad ? 40 : 30   // 高さ
+
+                                Menu {
+                                    Picker("Sort", selection: $sortOption) {
+                                        ForEach(RecordSortOption.allCases, id: \.self) { option in
+                                            Text(option.rawValue).tag(option)
+                                        }
+                                    }
+                                } label: {
                                     ZStack {
-                                        Image("key").resizable().frame(width: 140, height: 55)
-                                        Text("BACK").font(.system(size: 18, weight: .bold)).foregroundColor(.black)
+                                        // ボタンの背景画像
+                                        Image("button")
+                                            .resizable()
+                                            // .aspectRatio(contentMode: .fit) // ← これがあるとサイズ固定しにくいので外します
+                                            .frame(width: btnW, height: btnH)
+                                            .opacity(0.8) // 巻物に馴染ませる
+                                        
+                                        // ボタンの文字とアイコン
+                                        HStack(spacing: 5) {
+                                            Image(systemName: "arrow.up.arrow.down")
+                                                .font(.system(size: isPad ? 18 : 12))
+                                            Text(sortOption.rawValue)
+                                                .font(.custom("Papyrus", size: isPad ? 20 : 13))
+                                                .fontWeight(.bold)
+                                        }
+                                        .foregroundColor(.black.opacity(0.8))
                                     }
                                 }
-                                .padding(.vertical, 30)
+                                .padding(.top, isPad ? 40 : 50) // 戻るボタンと高さを合わせる
+                                .padding(.trailing, isPad ? 10 : 10)
                             }
-                            .padding(.horizontal, geo.size.width * 0.1)
-                            .frame(width: geo.size.width)
-                            .frame(minHeight: geo.size.height - (geo.size.width * 0.2))
-                            .background(
-                                Image("makimono_middle")
-                                    .resizable()
-                                    .offset(x: geo.size.width > 600 ? 0 : 2)
-                            )
-
-                            // 巻物の下
-                            Image("makimono_bottom")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: geo.size.width)
+                        // --- ★ 2. ここから下だけがスクロールする！ ---
+                        GeometryReader { scrollGeo in
+                            ScrollView {
+                                VStack(spacing: 20) {
+                                    // ソートメニュー
+                                
+                                    
+                                    // レコード一覧
+                                    ForEach(filteredRecords) { record in
+                                        ghostRecordButton(record, screenWidth: geo.size.width)
+                                    }
+                                }
+                                .padding(.vertical, 20)
+                                .padding(.horizontal, geo.size.width * 0.1)
+                                .frame(maxWidth: .infinity)
+                                
+                                // スクロールインジケーター用の計算
+                                .background(GeometryReader { contentGeo in
+                                    Color.clear.onAppear {
+                                        contentHeight = contentGeo.size.height
+                                        containerHeight = scrollGeo.size.height
+                                    }
+                                    .onChange(of: contentGeo.frame(in: .named("scroll")).minY) { _, newValue in
+                                        scrollOffset = newValue
+                                        // ★ おまけ: レコードを消した時にも再計算されるように追加しておくと安心です
+                                        contentHeight = contentGeo.size.height
+                                        containerHeight = scrollGeo.size.height
+                                    }
+                                })
+                            }
+                            .coordinateSpace(name: "scroll")
                         }
-                        .background(GeometryReader { contentGeo in
-                            Color.clear.onAppear {
-                                contentHeight = contentGeo.size.height
-                                containerHeight = geo.size.height
-                            }
-                            .onChange(of: contentGeo.frame(in: .named("scroll")).minY) { _, newValue in
-                                scrollOffset = newValue
-                            }
-                        })
+                        .frame(width: geo.size.width)
+                        .background(
+                            Image("makimono_middle")
+                                .resizable()
+                                .frame(width: 1024)
+                                .scaleEffect(x: geo.size.width / 1024, y: 1.0)
+                        )
+                        .clipped()
+                        
+                        // --- 固定の巻物フッター ---
+                        Image("makimono_bottom")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geo.size.width)
                     }
-                    .coordinateSpace(name: "scroll")
                     .ignoresSafeArea()
-
-                    // 右側のインジケーター（レコードがある時だけ表示）
-                    rulerIndicator(screenHeight: geo.size.height)
+                    
+    
+                 
                 }
-            }
+            }.frame(width: geo.size.width, height: geo.size.height)
         }
+            .background(
+                Image("backscreen_t")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+            )
+        
     }
 
-    // --- 以下、ボタンやデザインの関数はそのままでOK ---
+    // --- 以下、ボタンやデザインの関数 ---
     
     private func ghostRecordButton(_ record: GhostRecord, screenWidth: CGFloat) -> some View {
-        Button(action: {
-            let config = recoverConfig(from: record)
-            onSelect(config, record)
-        }) {
-            ZStack {
-                Image("record")
-                    .resizable()
-                    .frame(height: screenWidth > 600 ? 110 : 80)
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("\(record.playerName) の記録")
-                            .font(.custom("Papyrus", size: screenWidth > 600 ? 16 : 12))
-                            .foregroundColor(.black)
-                        
-                        Text(record.configLabel)
-                            .font(.custom("Papyrus", size: screenWidth > 600 ? 24 : 18))
-                        
-                        Text(record.date, style: .date)
-                            .font(.caption).foregroundColor(.black.opacity(0.6))
+            // ★ 2. HStackで囲んで、右側にゴミ箱ボタンを配置
+            HStack(spacing: 15) {
+                
+                // --- 元のレコード選択ボタン ---
+                Button(action: {
+                    // ★追加：ゴーストを選択した時に ghostSound.mp3 を鳴らす！
+                    SoundManager.instance.playSound(name: "ghostSound", ext: "mp3")
+                    
+                    let config = recoverConfig(from: record)
+                    onSelect(config, record)
+                }) {
+                    ZStack {
+                        Image("record")
+                            .resizable()
+                            .frame(height: screenWidth > 600 ? 110 : 80)
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(record.playerName) の記録")
+                                    .font(.custom("Papyrus", size: screenWidth > 600 ? 16 : 12))
+                                    .foregroundColor(.black)
+                                
+                                Text(record.configLabel)
+                                    .font(.custom("Papyrus", size: screenWidth > 600 ? 24 : 18))
+                                
+                                Text(record.date, style: .date)
+                                    .font(.caption).foregroundColor(.black.opacity(0.6))
+                            }
+                            Spacer()
+                            Text("\(String(format: "%.1f", record.solveIntervals.reduce(0,+)))s")
+                                .font(.custom("Papyrus", size: screenWidth > 600 ? 26 : 20))
+                        }
+                        .padding(.horizontal, 25)
+                        .foregroundColor(.black)
                     }
-                    Spacer()
-                    Text("\(String(format: "%.1f", record.solveIntervals.reduce(0,+)))s")
-                        .font(.custom("Papyrus", size: screenWidth > 600 ? 26 : 20))
                 }
-                .padding(.horizontal, 25)
-                .foregroundColor(.black)
+                
+                // --- ★ 3. ゴミ箱（削除）ボタン ---
+                Button(action: {
+                    // ★追加：ゴミ箱ボタンを押した時も戻るボタンと同じ音を鳴らす！
+                    SoundManager.instance.playSound(name: "backSound", ext: "mp3")
+                    
+                    // データベースからこのレコードを削除
+                    modelContext.delete(record)
+                }) {
+                    Image("trash")
+                        .resizable()
+                        .frame(width:screenWidth * 0.05, height: screenWidth * 0.05 )
+                }
             }
         }
-    }
-
-    private func rulerIndicator(screenHeight: CGFloat) -> some View {
-        ZStack(alignment: .top) {
-            Image("ruler").resizable().frame(width: 25, height: screenHeight * 0.6).opacity(0.5)
-            let totalScrollable = contentHeight - containerHeight
-            let progress = totalScrollable > 0 ? (scrollOffset / totalScrollable) : 0
-            Image("icon_sumo").resizable().frame(width: 40, height: 40)
-                .offset(y: min(max(-progress, 0), 1) * (screenHeight * 0.6 - 40))
-        }
-        .padding(.trailing, 10)
-    }
+ 
 
     func recoverConfig(from record: GhostRecord) -> LevelConfig {
             // ラベルから数字だけを取り出す
@@ -173,4 +264,5 @@ struct GhostSelectView: View {
             // mode と digits だけ渡せばOKです
             return LevelConfig(mode: mode, digits: digits.first ?? 1)
         }
+    
 }
