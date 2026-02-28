@@ -24,7 +24,7 @@ struct FlashAnzanTutorialView: View {
     }
 }
 
-// --- 🌟 「Flash Anzan」専用のアニメーションページ ---
+
 struct FlashAnzanPage: View {
     let showNextArrow: Bool
     
@@ -32,11 +32,12 @@ struct FlashAnzanPage: View {
     @State private var showTitle = false
     @State private var showContent = false
     @State private var showArrow = false
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
     
-    // 🌟 フラッシュ暗算のロジック用
-    let numbers = [1, 2, 3, 4, 5] // ラフ画と同じ問題！
+ 
+    let numbers = [1, 2, 3, 4, 5]
     @State private var currentIndex = 0
-    // 1.0秒ごとに数字を切り替える（少し遅めにして式を読ませる）
+
     let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -54,16 +55,16 @@ struct FlashAnzanPage: View {
                     .offset(y: showTitle ? 0 : -20)
                 
                 VStack(spacing: w * 0.01) {
-                    // ② 画面（ボード）とカエル
+                
                     HStack(spacing: w * 0.005) {
-                        // 画面に表示される数字
+                       
                         ZStack {
-                            Image("board") // ★ ゲームで使ってる黒板/掲示板の画像
+                            Image("board")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: w * 0.4)
                             
-                            // currentIndexが配列の範囲内なら数字を表示、最後（合計）は非表示
+                          
                             if currentIndex < numbers.count {
                                 Text("\(numbers[currentIndex])")
                                     .font(.custom("Papyrus", size: w * 0.15))
@@ -73,31 +74,34 @@ struct FlashAnzanPage: View {
                             }
                         }
                         ZStack {
-                            // 吹き出し風の枠（画像があればImageに差し替えてね）
+                          
                            Image("bubble")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: w * 0.5)
                             
-                            // 動的に変わる計算式
+       
                             Text(currentEquation)
-                                .font(.custom("Papyrus", size: w * 0.06))
+                               
+                                .font(.custom("Papyrus", size: w * (isPad ? 0.04 : 0.06)))
                                 .minimumScaleFactor(0.3)
                                 .lineLimit(1) // 1行に収める
-                                .frame(width: w * 0.25)
-                                 .animation(.none)
-                                 .offset(y: w * -0.02)
+                             
+                                .frame(width: w * (isPad ? 0.18 : 0.25))
+                                
+                                .animation(.none, value: currentEquation)
+                                .offset(y: w * -0.02)
 
                         }
                         .offset(y: w * 0.1)
                         
                        
                     }
-                    Image("frog_head") // ★ カエルの画像
+                    Image("frog_head")
                         .resizable()
                         .scaledToFit()
                         .frame(width: w * 0.7)
-                    // ③ 脳内の計算式（吹き出し）
+        
 //                    ZStack {
 //                        // 吹き出し風の枠（画像があればImageに差し替えてね）
 //                       Image("bubble")
@@ -111,7 +115,7 @@ struct FlashAnzanPage: View {
 //                            .animation(.none) // 文字のチラつき防止
 //                    }
                     
-                    // ④ 説明テキスト
+               
                     Text("Numbers appear for a moment.\nAdd them up in your head!")
                         .font(.custom("Papyrus", size: w * 0.05))
                         .multilineTextAlignment(.center)
@@ -122,7 +126,7 @@ struct FlashAnzanPage: View {
                 
                 Spacer()
                 
-                // ⑤ 矢印
+         
                 if showNextArrow {
                     VStack {
                         Text("slide to next")
@@ -142,11 +146,11 @@ struct FlashAnzanPage: View {
             .onAppear {
                 triggerAnimations()
             }
-            // 🌟 タイマーでフラッシュ暗算を進行させる
+ 
             .onReceive(timer) { _ in
                 guard showContent else { return }
                 
-                // 次の数字へ（全部終わったら少し待ってから0に戻る）
+                
                 if currentIndex > numbers.count {
                     currentIndex = 0 // リセット
                 } else {
@@ -156,7 +160,7 @@ struct FlashAnzanPage: View {
         }
     }
     
-    // --- 🌟 動的な計算式を作る魔法 ---
+    
     private var currentEquation: String {
         // まだ始まっていない時
         if currentIndex == 0 {
@@ -174,8 +178,7 @@ struct FlashAnzanPage: View {
             return "\(allNumbers) = \(sum)"
         }
     }
-    
-    // --- 🌟 表示順序のアニメーション ---
+
     private func triggerAnimations() {
         guard !showTitle else { return }
         Task {
@@ -223,11 +226,11 @@ struct FlashAnzanExplanationPage: View {
                 .opacity(showText3 ? 1 : 0)
                 .offset(y: showText3 ? 0 : -20)
             
-            // ラフ画の可愛いうさぎのイラスト
-            Image("rabbit") // ★ うさぎの画像名をここに入れる
+      
+            Image("rabbit")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 120) // イラストの大きさ
+                .frame(maxWidth: 120)
                 .opacity(showImage ? 1 : 0)
                 .offset(y: showImage ? 0 : -20)
                 .padding(.top, 10)
@@ -256,7 +259,7 @@ struct FlashAnzanExplanationPage: View {
         }
     }
     
-    // --- 🌟 順番に表示するアニメーション ---
+    // ---  順番に表示するアニメーション ---
     private func triggerAnimations() {
         guard !showText1 else { return }
         Task {

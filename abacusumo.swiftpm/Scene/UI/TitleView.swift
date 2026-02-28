@@ -58,21 +58,32 @@ struct TitleView: View {
                     Spacer()
 
                     // --- 4. ボタン群 ---
+                    // --- 4. ボタン群 ---
                     VStack(spacing: isPad ? 30 : 15) {
+                        
                         // SOLO TRAINING
-                        Button(action: { onStart(.addition) }) {
+                        Button(action: {
+                            SoundManager.instance.playSound(name: "tap") // ★追加：音を鳴らす
+                            onStart(.addition)
+                        }) {
                             MenuButtonView(title: "SOLO TRAINING", isPad: isPad)
                         }
                         
                         // GHOST MATCH
-                        Button(action: { onGhostMode() }) {
+                        Button(action: {
+                            SoundManager.instance.playSound(name: "tap") // ★追加：音を鳴らす
+                            onGhostMode()
+                        }) {
                             MenuButtonView(title: "GHOST MATCH", isPad: isPad)
                         }
 
-                        // ★ チュートリアルボタンを追加！
+                        // TUTORIAL (NavigationLink)
                         NavigationLink(destination: TutorialMenuView()) {
                             MenuButtonView(title: "TUTORIAL", isPad: isPad)
                         }
+                        .simultaneousGesture(TapGesture().onEnded { // ★NavigationLinkで音を鳴らすための工夫
+                            SoundManager.instance.playSound(name: "tap")
+                        })
                     }
                     .padding(.bottom, isPad ? 100 : 60)
                 }

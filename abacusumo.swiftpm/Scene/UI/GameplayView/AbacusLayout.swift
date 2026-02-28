@@ -16,41 +16,57 @@ struct AbacusLayout: View {
     let isGameOver: Bool
     let showEmptyWarning: Bool
     let onKeyInput: (String) -> Void
-
+    
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
-                        
-            // ★ここを修正（魔法の3行）
-            // 1. 横幅から計算したサイズ（今まで通り）
-            let widthBase = w * (isPad ? 0.7 : 0.95)
-                        
-            // 2. 高さから計算したサイズ（13インチ対策：縦にはみ出さない限界値）
-            let heightBase = h * (isPad ? 0.49 : 0.85)
-                        
-            // 3. 小さい方を採用！
-            // これで「11インチは横幅ピッタリ」「13インチは高さピッタリ」になります
-            let baseW = min(widthBase, heightBase)
             
-            // ★ 全体を ZStack (レイヤー重ね) で自由に配置する方式 ★
+           
+            let widthBase = w * (isPad ? 0.7 : 0.95)
+            
+           
+            let heightBase = h * (isPad ? 0.49 : 0.85)
+            
+     
+            let baseW = min(widthBase, heightBase)
+       
             ZStack {
                 
                 // --- 【レイヤー1】 掲示板 (一番上) ---
                 ZStack {
+                    // 1. まず「土台」となる掲示板を表示
                     Image("board")
-                        .resizable().scaledToFit()
-                        .frame(width: baseW * 0.9)
-                    
-                    Text(isAnswering ? (userInput.isEmpty ? "?" : userInput) : currentDisplayText)
-                        .font(.system(size: baseW * 0.12, weight: .black, design: .monospaced))
-                        .foregroundColor(showEmptyWarning ? .red : .black)
-                        .offset(y: baseW * 0.02)
+                        .resizable()
+                        // 掲示板自体のサイズを固定（ここが動くとレイアウトが崩れる原因になります）
+                        .frame(width: baseW * 0.5, height: baseW * 0.5)
+                        .overlay(
+                            // 2. その上にコンテンツを「重ねる」
+                            Group {
+                                if currentDisplayText == "READY" {
+                                    Image("Gunpai")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: baseW * 0.4, height: baseW * 0.4)
+                                        .offset(y: baseW * 0.03)
+                                } else {
+                                    Text(isAnswering ? (userInput.isEmpty ? "?" : userInput) : currentDisplayText)
+                          
+                                        .font(.system(size: baseW * 0.2, weight: .heavy, design: .rounded))
+                                        .foregroundColor(showEmptyWarning ? .red : .black)
+                                        
+                                        
+                                        .frame(width: baseW * 0.45)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.5)
+                                        .offset(y: baseW * 0.045)
+                                }
+                            }
+                        )
                 }
+                // レイヤー全体の枠組み
                 .frame(height: baseW * 0.4)
-                // 位置指定: 上の方へ (-0.55 くらいが丁度いい位置です)
                 .offset(y: -baseW * 0.55)
-                
                 
                 // --- 【レイヤー2】 力士 (掲示板と枠の間) ---
                 ZStack {
@@ -68,16 +84,16 @@ struct AbacusLayout: View {
                             .frame(width: baseW * 0.4)
                             .offset(x: baseW * CGFloat(gameState - 0.5))
                             .animation(.interpolatingSpring(stiffness: 120, damping: 12), value: gameState)
-                                
+                        
                     }
                 }
-                // 位置指定: ちょっと上 (-0.2 くらい)
+           
                 .offset(y: -baseW * 0.5)
                 
                 
                 // --- 【レイヤー3】 枠とゲージ (真ん中) ---
                 ZStack {
-                    // ★ ここでフレームをデカく設定 (1.3倍)
+        
                     let frameW = baseW * 1.325
                     
                     Image("frame")
@@ -92,10 +108,10 @@ struct AbacusLayout: View {
                                 .colorMultiply(gameState > (Double(i + 1) * 0.16) ? .white : .black)
                         }
                     }
-                    // フレーム内での玉の位置調整
+              
                     .offset(y: frameW * -0.275)
                 }
-                // 位置指定: 画面中央より少し下 (+0.15 くらい)
+           
                 .offset(y: baseW * 0.58)
                 
                 
@@ -109,7 +125,7 @@ struct AbacusLayout: View {
                 // 位置指定: 枠の下 (+0.7 くらい)
                 .offset(y: baseW * 0.7)
                 
-                Image("backFrame") // ← 用意した画像の名前
+                Image("backFrame")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
@@ -117,7 +133,8 @@ struct AbacusLayout: View {
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }
-            .frame(width: w, height: h) // 画面いっぱいに広げる
+            .frame(width: w, height: h) 
         }
     }
+    
 }

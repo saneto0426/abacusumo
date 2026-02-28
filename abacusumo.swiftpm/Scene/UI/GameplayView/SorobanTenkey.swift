@@ -5,7 +5,6 @@
 //  Created by 🐣 on 2026/01/27.
 //
 
-
 import SwiftUI
 
 struct SorobanTenkey: View {
@@ -16,7 +15,7 @@ struct SorobanTenkey: View {
     let isAnswering: Bool
     let onAction: (String) -> Void
     
-    // キー配列
+    // キー配列 (システム上はすべて "S" として扱います)
     private let columns = [
         ["1", "4", "7", "C"],
         ["2", "5", "8", "0"],
@@ -46,46 +45,55 @@ struct SorobanTenkey: View {
                 VStack(spacing: baseW * 0.015) {
                     ForEach(columns[col], id: \.self) { key in
                         Button(action: {
-                            onAction(key)
+                            onAction(key) // 押されたら "S" など元の文字をそのまま送る
                         }) {
                             ZStack {
-                                // 画像 (オフセットはここでかけず、後でまとめてかけます)
+                                // 背景のひし形画像
                                 Image("key")
                                     .resizable().scaledToFit()
                                     .frame(width: baseW * 0.2, height: baseW * 0.2)
-                                    // ここでの .offset は削除 (下に移動)
                                 
-                                // ラベルの出し分け
-                                let labelText = key == "S" ? (isGameOver ? "RETRY" : (isAnswering ? "OK" : "ST")) : key
-                                let labelColor = key == "S" ? Color.green : (key == "C" ? Color.red : Color.black)
-                                
-                                Text(labelText)
-                                    .font(.custom("Papyrus", size: baseW * 0.08))
-                                    .font(.system(size: key == "S" ? baseW * 0.04 : baseW * 0.08, weight: .black))
-                                    .foregroundColor(labelColor)
-                                    // 微調整: 画像との相対位置だけ合わせる（少し下にずらす）
-                                    .offset(y: baseW * 0.01)
+                                // ★修正ポイント: "S"ボタンだけ状態に合わせて記号(アイコン)に変える
+                                if key == "S" {
+                                    if isGameOver {
+                                        // 状態1: リトライ
+                                        Image(systemName: "arrow.counterclockwise")
+                                            .font(.system(size: baseW * 0.08, weight: .black))
+                                            .foregroundColor(.orange)
+                                            .offset(y: baseW * 0.005) // 既存の微調整を適用
+                                    } else if isAnswering {
+                                        // 状態2: 回答の決定
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: baseW * 0.08, weight: .black))
+                                            .foregroundColor(.green)
+                                            .offset(y: baseW * 0.005)
+                                    } else {
+                                        // 状態3: 開始・次へ進む
+                                        Image(systemName: "play.fill")
+                                            .font(.system(size: baseW * 0.08, weight: .black))
+                                            .foregroundColor(.orange)
+                                            .offset(y: baseW * 0.005)
+                                    }
+                                } else {
+                                    // S以外の通常キー（数字とC）
+                                    let labelColor = (key == "C" ? Color.red : Color.black)
+                                    
+                                    Text(key)
+                                        .font(.system(size: baseW * 0.08, weight: .black, design: .rounded))
+                                        .foregroundColor(labelColor)
+                                        .offset(y: baseW * 0.005)
+                                }
                             }
-                            // ★修正ポイント: ここで当たり判定のサイズを決める
+                            // 当たり判定のサイズと形
                             .frame(width: baseW * 0.18, height: baseW * 0.14)
-//                            .overlay(
-//                                    Diamond()
-////                                        .fill(Color.red.opacity(0.5)) // 半透明の赤
-//                                        .allowsHitTesting(false)      // デバッグ表示がタップを邪魔しないように
-//                                )
-                            
-                            // ★修正ポイント: 当たり判定の形を決める
                             .contentShape(Diamond())
-                            
-                            // ★修正ポイント: 形とサイズが決まった「後」に、全体を上にズラす！
-                            // これで「見た目」も「当たり判定」も一緒に上に移動します
-                            .offset(y: -baseW * 0.08)
+                            // 形とサイズが決まった後に全体を上にズラす
+                            .offset(y: -baseW * 0.075)
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
                 }
             }
-            
             
             // --- 右の飾り画像 ---
             VStack {
@@ -95,7 +103,7 @@ struct SorobanTenkey: View {
                     .scaledToFit()
                     .frame(width: baseW * 0.18)
                     .offset(y: -baseW * 0.165)
-                    .allowsHitTesting(false) // ★重要: これでボタンを邪魔しません
+                    .allowsHitTesting(false)
                 Spacer()
             }
             .frame(height: baseW * 0.8)
@@ -103,27 +111,18 @@ struct SorobanTenkey: View {
     }
 }
 
-// ひし形（ダイヤ型）の定義
 // ひし形（ダイヤ型）の定義【修正版：当たり判定縮小機能付き】
 struct Diamond: Shape {
     func path(in rect: CGRect) -> Path {
-        // ★ここが魔法の調整！
-        // 枠(rect)から、内側に 20% くらい隙間(padding)を空けた「小さい枠」を作ります
-        // この 0.2 を 0.3 にするともっと狭く、0.1 にすると広くなります
         let paddingX = rect.width * 0.05
         let paddingY = rect.height * 0.05
         
-        // 小さくなった枠
         let smallRect = rect.insetBy(dx: paddingX, dy: paddingY)
         
         var path = Path()
-        // 上
         path.move(to: CGPoint(x: smallRect.midX, y: smallRect.minY))
-        // 右
         path.addLine(to: CGPoint(x: smallRect.maxX, y: smallRect.midY))
-        // 下
         path.addLine(to: CGPoint(x: smallRect.midX, y: smallRect.maxY))
-        // 左
         path.addLine(to: CGPoint(x: smallRect.minX, y: smallRect.midY))
         
         path.closeSubpath()

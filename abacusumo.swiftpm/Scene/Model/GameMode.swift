@@ -22,7 +22,7 @@ struct LevelConfig: Equatable {
     
     var label: String {
         // switch文も不要になり、シンプルになります
-        return "\(digits)桁\(count)口"
+        return "\(digits)digits, \(count)count"
     }
     
     

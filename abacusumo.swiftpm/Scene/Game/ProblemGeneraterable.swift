@@ -5,7 +5,7 @@
 //  Created by 🐣 on 2025/11/17.
 //
 
-// Sources/Model/ProblemGenerator.swift
+
 import Foundation
 
 protocol ProblemGeneratable {

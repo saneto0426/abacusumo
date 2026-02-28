@@ -1,7 +1,8 @@
 import SwiftUI
 import SwiftData
+import AVFoundation
 
-// 画面の遷移状態（modeSelect を削除しました）
+// 画面の遷移状態
 enum AppScreen {
     case title
     case digitSelect(mode: GameMode)
@@ -20,11 +21,11 @@ struct ContentView: View {
             switch currentScreen {
             case .title:
                 TitleView(
-                    // ★変更点1: スタートボタンで、いきなり桁数選択へ（モードは .addition 固定）
+                    
                     onStart: { _ in
                         currentScreen = .digitSelect(mode: .addition)
                     },
-                    // ★変更点2: ゴーストボタンで、いきなりゴースト一覧へ
+                   
                     onGhostMode: {
                         currentScreen = .ghostSelect(mode: .addition)
                     }
@@ -36,24 +37,78 @@ struct ContentView: View {
                 ProblemSelectView(mode: mode) { config in
                     currentScreen = .game(config: config, ghost: nil)
                 } onBack: {
-                    // ★変更点3: 戻るときはタイトルへ
+           
+                    SoundManager.instance.playSound(name: "backSound", ext: "mp3")
                     currentScreen = .title
                 }
 
             case .ghostSelect(let mode):
-                // ★修正: 引数から ghostManager を削除（GhostSelectView側で @Query を使うため不要）
+            
                 GhostSelectView(mode: mode) { config, ghost in
                     currentScreen = .game(config: config, ghost: ghost)
                 } onBack: {
-                    // ★変更点4: 戻るときはタイトルへ
+              
+                    SoundManager.instance.playSound(name: "backSound", ext: "mp3")
                     currentScreen = .title
                 }
 
             case .game(let config, let ghost):
                 GameView(ghostManager: ghostManager, config: config, ghostToBeat: ghost) {
+                   
+                    SoundManager.instance.playSound(name: "backSound", ext: "mp3")
                     currentScreen = .title
                 }
             }
         }
+    }
+}
+
+@MainActor
+
+class SoundManager {
+    static let instance = SoundManager()
+    
+
+    private var sePlayers: [AVAudioPlayer] = []
+    private var bgmPlayer: AVAudioPlayer?
+
+
+    func playSound(name: String, ext: String = "wav") {
+        guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
+            print("SE: \(name).\(ext) が見つかりません")
+            return
+        }
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.play()
+            
+            
+            sePlayers.append(player)
+            
+           
+            sePlayers.removeAll { $0.isPlaying == false }
+            
+        } catch {
+            print("SE再生エラー: \(error.localizedDescription)")
+        }
+    }
+
+
+    func playBGM(name: String, ext: String = "mp3") {
+        guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
+            print("BGM: \(name).\(ext) が見つかりません")
+            return
+        }
+        do {
+            bgmPlayer = try AVAudioPlayer(contentsOf: url)
+            bgmPlayer?.numberOfLoops = -1
+            bgmPlayer?.play()
+        } catch {
+            print("BGM再生エラー: \(error.localizedDescription)")
+        }
+    }
+
+    func stopBGM() {
+        bgmPlayer?.stop()
     }
 }

@@ -46,7 +46,7 @@ struct GameView: View {
             .clipped()
             .ignoresSafeArea()
 
-            // ★ここ！ 新しいレイアウトを呼び出すだけ！とてもシンプル
+            // 新しいレイアウトを呼び出す
             AbacusLayout(
                 isPad: isPad,
                 gameState: gameState,
@@ -59,34 +59,35 @@ struct GameView: View {
             )
 
             // 戻るボタン
-            VStack {
-                HStack {
-                    Button(action: onBack) {
-                        Image("back")
-                            .resizable().scaledToFit()
-                            .frame(width: isPad ? 45 : 30)
-                            .foregroundColor(.white)
+            .overlay(alignment: .topLeading) {
+                        Button(action: {
+                            SoundManager.instance.playSound(name: "tap") // ★戻るボタンの音
+                            onBack()
+                        }) {
+                            Image("back")
+                                .resizable().scaledToFit()
+                                .frame(width: isPad ? 45 : 30)
+                                .foregroundColor(.white)
+                        }
+                        .padding(.top, isPad ? 40 : 50)
+                        .padding(.leading, 20)
+                        .opacity(showNameInput ? 0 : 1)
                     }
-                    Spacer()
-                }
-                Spacer()
-            }
-            .padding(.top, isPad ? 40 : 50)
-            .padding(.leading, 20)
-            .opacity(showNameInput ? 0 : 1)
-           
+            
             // 名前入力オーバーレイ
             if showNameInput {
                 NameInputView(
                     inputName: $inputName,
                     onSave: saveRecord,
-                    onCancel: { onBack() }
+                    onCancel: {
+                        SoundManager.instance.playSound(name: "tap") // ★キャンセル時の音
+                        onBack()
+                    }
                 )
             }
         }
         .onAppear { setupFirst() }
         .onReceive(timer) { _ in update() }
-        // 引数を取らない書き方に変える
         .onChange(of: userInput) {
             if !userInput.isEmpty { showEmptyWarning = false }
         }
@@ -97,11 +98,13 @@ struct GameView: View {
         return SimpleProblemGenerator()
     }
 
-    // --- ロジック部分 (変更なし) ---
+    // --- ロジック部分 ---
     
     func handleKeyInput(_ key: String) {
+            SoundManager.instance.playSound(name: "tap") // ★テンキーを押した時の音
+
             if showNameInput { return }
-           
+            
             // Sボタン（進行ボタン）の処理
             if key == "S" {
                 if isGameOver {
@@ -118,16 +121,13 @@ struct GameView: View {
                 return // Sボタンの処理が終わったらここで抜ける
             }
             
-            // ★ここに追加！
             // 回答モード（isAnswering）じゃない時は、ここで無視して終了！
-            // これで問題表示中に数字を押しても反応しなくなります
             if !isAnswering { return }
 
             // 数字とCボタンの処理
             if key == "C" {
                 userInput = ""
             } else {
-                // 桁数制限（例: 8桁まで）を入れるとさらに親切です
                 if userInput.count < 8 {
                     userInput += key
                 }
@@ -145,7 +145,7 @@ struct GameView: View {
         showEmptyWarning = false
         lastProblemStartTime = Date()
         
-        // ★マリカ方式の初期化
+        // マリカ方式の初期化
         totalPlayTime = 0
         ghostSolveTimestamps = []
         nextGhostIndex = 0
@@ -185,36 +185,51 @@ struct GameView: View {
             
             gameState = min(1.0, gameState + 0.2)
             
-            if gameState >= 1.0 {
-                            isGameOver = true
-                            currentDisplayText = "WIN!"
-                            showNameInput = true
-                            return // ここで終了して、次の問題には進まない
-                        }
+            // ★変更：玉が5つ全部白になった瞬間（0.80より大きくなった時）に勝利！
+            if gameState > 0.80 {
+                isGameOver = true
+                currentDisplayText = "WIN!"
+                // ★勝った時の音を鳴らす！
+                SoundManager.instance.playSound(name: "kozuzumi", ext: "mp3")
+                showNameInput = true
+                return // ここで終了して、次の問題には進まない
+            }
         }
         
         startNext()
     }
     
     func update() {
-        guard !isGameOver && currentDisplayText != "READY" && currentIndex > 0 else { return }
-        
-        totalPlayTime += 0.05
-        
-        if ghostToBeat == nil {
-            gameState -= 0.0005
-        } else {
-            if nextGhostIndex < ghostSolveTimestamps.count {
-                if totalPlayTime >= ghostSolveTimestamps[nextGhostIndex] {
-                    gameState -= 0.1
-                    nextGhostIndex += 1
+            guard !isGameOver && currentDisplayText != "READY" && currentIndex > 0 else { return }
+            
+            totalPlayTime += 0.05
+            
+            if ghostToBeat == nil {
+                gameState -= 0.0005
+            } else {
+                if nextGhostIndex < ghostSolveTimestamps.count {
+                    if totalPlayTime >= ghostSolveTimestamps[nextGhostIndex] {
+                        gameState -= 0.1
+                        nextGhostIndex += 1
+                    }
                 }
             }
+            
+            // ★変更：玉が5つ全部黒になった瞬間（0.16以下になった時）に敗北！
+            if gameState <= 0.16 {
+                isGameOver = true
+                currentDisplayText = "LOSE"
+                // ★負けた時の音を鳴らす！
+                SoundManager.instance.playSound(name: "faile", ext: "mp3")
+            }
+            // ★変更：玉が全部白になった瞬間
+            else if gameState > 0.80 {
+                isGameOver = true
+                currentDisplayText = "WIN!"
+                SoundManager.instance.playSound(name: "kozuzumi", ext: "mp3")
+                showNameInput = true
+            }
         }
-        
-        if gameState <= 0.0 { isGameOver = true; currentDisplayText = "LOSE" }
-        else if gameState >= 1.0 { isGameOver = true; currentDisplayText = "WIN!"; showNameInput = true }
-    }
     
     func saveRecord() {
         let newRecord = GhostRecord(mode: config.mode, configLabel: config.label, solveIntervals: solveIntervals, date: Date(), playerName: inputName)
@@ -222,6 +237,3 @@ struct GameView: View {
         onBack()
     }
 }
-
-
-

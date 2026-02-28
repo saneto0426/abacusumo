@@ -87,9 +87,9 @@ struct TutorialPageTemplate5: View {
                             }
                         }
                     }
-                    // ★ 最強の魔法！これでフレームを小さくしても球が勝手に縮まなくなります！
+                  
                     .fixedSize()
-                    .offset(y: w*0.002)
+                    .offset(y: w * 0.002)
                     
                     // 3. 【手のレイヤー】
                     ZStack {
@@ -177,8 +177,7 @@ struct TutorialPageTemplate5: View {
         }
     }
     
-    // --- 🌟 そろばんの動き＆手の操作ループ処理 ---
-    // --- 🌟 そろばんの動き＆手の操作ループ処理 ---
+
         private func startAbacusLoop(beadSize: CGFloat,w: CGFloat) {
             Task {
                 while !Task.isCancelled {

@@ -11,7 +11,6 @@ struct ProblemSelectView: View {
     var onSelect: (LevelConfig) -> Void
     var onBack: () -> Void
 
-    // デバイス判定
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
     }
@@ -26,60 +25,85 @@ struct ProblemSelectView: View {
                 .clipped()
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                // ヘッダー（Papyrusフォント）
-                Text("SELECT LEVEL")
-                    .font(.custom("Papyrus", size: isPad ? 44 : 26)) // Papyrusに変更
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.top, isPad ? 60 : 40)
+            // 2. メインコンテンツ
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = geo.size.height
+                let baseW = min(w, h)
 
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: isPad ? 25 : 15) {
-                        ForEach(1...4, id: \.self) { d in
-                            levelButton(label: "\(d) DIGITS (5 NUMS)") {
-                                // modeは .addition で固定！
-                                onSelect(LevelConfig(mode: .addition, digits: d, count: 5))
+                ZStack {
+                    VStack(spacing: h * 0.02) {
+                        
+                        // --- 固定されるヘッダー部分 ---
+                        ZStack {
+                            Image("button")
+                                .resizable()
+                                .frame(width: baseW * 0.5, height: baseW * 0.15)
+                            
+                            Text("SELECT LEVEL")
+                                .font(.custom("Papyrus", size: baseW * 0.045))
+                                .fontWeight(.bold)
+                                .foregroundColor(.black)
+                                .offset(y: baseW * 0.01)
+                        }
+                        .padding(.top, h * 0.02)
+                        
+                        // --- スクロールする問題選択ボタン部分 ---
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(spacing: baseW * 0.04) {
+                                ForEach(1...4, id: \.self) { d in
+                                    levelButton(label: "\(d) DIGITS (5 NUMS)", baseW: baseW) {
+                                        onSelect(LevelConfig(mode: .addition, digits: d, count: 5))
+                                    }
+                                }
                             }
+                            .padding(.bottom, h * 0.1)
+                            .padding(.top, baseW * 0.02)
                         }
                     }
-                    .padding(.vertical, 20)
+                    
+                    // 【前面の枠フレーム】
+                    Image("backFrame")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                        .clipped()
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
                 }
-                
-                // ★以前ここにあった戻るボタンは削除しました（overlayに移動）
             }
         }
-        // ★ GameViewと同じOverlay方式で戻るボタンを左上に配置
+        // ★修正ポイント：ここの戻るボタンから `tap` 音を削除しました！
+        // （ContentView側で backSound が鳴るため）
         .overlay(alignment: .topLeading) {
             Button(action: onBack) {
-                ZStack {
-                    Image("back") // 戻るアイコン
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: isPad ? 45 : 18, height: isPad ? 45 : 18)
-                        .foregroundColor(.white)
-                }
+                Image("back")
+                    .resizable().scaledToFit()
+                    .frame(width: isPad ? 45 : 30)
+                    .foregroundColor(.white)
             }
-            // GameViewと位置を合わせるためのパディング
             .padding(.top, isPad ? 40 : 50)
             .padding(.leading, 20)
         }
     }
 
     // 選択肢のボタン
-    func levelButton(label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    func levelButton(label: String, baseW: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: {
+            SoundManager.instance.playSound(name: "tap") // ★こっちのレベル選択の音は残しています
+            action()
+        }) {
             ZStack {
                 Image("option")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: isPad ? 450 : 280)
+                    .frame(width: baseW * 0.5)
                 
                 Text(label)
-                    .font(.custom("Papyrus", size: isPad ? 34 : 22)) // Papyrusに変更
+                    .font(.custom("Papyrus", size: baseW * 0.03))
                     .fontWeight(.black)
                     .foregroundColor(.black)
-                    .offset(y: -2)
+                    .offset(y: -baseW * 0.005)
             }
         }
     }
