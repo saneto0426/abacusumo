@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-// --- 🌟 遊び方の説明2ページ目（アニメーション＆勝利条件） ---
+
 struct TutorialPageTemplate3: View {
     let showNextArrow: Bool
     
@@ -76,19 +76,18 @@ struct TutorialPageTemplate3: View {
                 
                 // ③ 説明テキスト（How to win）
               Text("Push your opponent out to win!")
-                .font(.custom("Papyrus", size: w * 0.06)) // ★ 0.07 から少しだけ小さく
+                .font(.custom("Papyrus", size: w * 0.06))
                 .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true) // ★ 絶対に「...」で省略させない魔法
+                .fixedSize(horizontal: false, vertical: true)
                 .opacity(showText1 ? 1 : 0)
                 .offset(y: showText1 ? 0 : -20)
                                 
-                                // ④ 5の玉（ゲージ）の説明テキスト
-                                // ★ 文章を短く分かりやすくしました！（「5の玉はゲージです。誰が勝っているかで色が変わります！」）
+                            
                 Text("The 5-beads row is a gauge.\nColors change to show who's winning!")
-                .font(.custom("Papyrus", size: w * 0.045)) // ★ 0.05 から少しだけ小さく
-                .foregroundColor(.gray)
+                .font(.custom("Papyrus", size: w * 0.045))
+                
                 .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true) // ★ 絶対に「...」で省略させない魔法
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 20)
                 .opacity(showText2 ? 1 : 0)
                 .offset(y: showText2 ? 0 : -20)
@@ -118,7 +117,7 @@ struct TutorialPageTemplate3: View {
         }
     }
     
-    // --- 🌟 要素が順番に現れるアニメーション ---
+
     private func triggerRevealAnimations() {
         guard !showTitle else { return }
         Task {
@@ -134,7 +133,7 @@ struct TutorialPageTemplate3: View {
         }
     }
     
-    // --- 🌟 ぶっ飛びアニメーションの永遠ループ処理 ---
+
     private func startBattleLoop(w: CGFloat) {
         Task {
             while !Task.isCancelled {

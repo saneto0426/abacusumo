@@ -48,6 +48,17 @@ struct AbacusTutorialView: View {
                 TutorialPageTemplate5(showNextArrow: true)
                     .containerRelativeFrame(.vertical)
                 
+                CarryPartnersPage(showNextArrow: true)
+                    .containerRelativeFrame(.vertical)
+                
+                // 2ページ目：足し算（繰り上がり）
+                CarryAdditionPage(showNextArrow: true)
+                    .containerRelativeFrame(.vertical)
+                
+                // 3ページ目：引き算（繰り下がり）
+                CarrySubtractionPage(showNextArrow: true)
+                    .containerRelativeFrame(.vertical)
+                
              
                 TutorialPageTemplate1(
                     title: "You're Ready!",

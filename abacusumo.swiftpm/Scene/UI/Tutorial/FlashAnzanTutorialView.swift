@@ -108,7 +108,7 @@ struct FlashAnzanPage: View {
 //                            .resizable()
 //                            .rotationEffect(.degrees(180))
 //                            .frame(width: w * 0.8, height: w * 0.2)
-//                        
+//
 //                        // 動的に変わる計算式
 //                        Text(currentEquation)
 //                            .font(.custom("Papyrus", size: w * 0.06))
@@ -191,6 +191,7 @@ struct FlashAnzanPage: View {
     }
 }
 // Flash Anzanの説明ページ（2ページ目）
+
 struct FlashAnzanExplanationPage: View {
     let showNextArrow: Bool
     
@@ -201,61 +202,73 @@ struct FlashAnzanExplanationPage: View {
     @State private var showImage = false
     @State private var showArrow = false
     
+    // iPadかどうかの判定を追加
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+    
     var body: some View {
-        VStack(spacing: 40) { // 各段落の隙間
-            Spacer()
+        // ★ GeometryReaderを追加して画面サイズを取得
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
             
-            // 1段落目
-            Text("Imagine an abacus in your head\nand move the beads to calculate.")
-                .font(.custom("Papyrus", size: 50))
-                .multilineTextAlignment(.center)
-                .opacity(showText1 ? 1 : 0)
-                .offset(y: showText1 ? 0 : -20)
-            
-            // 2段落目
-            Text("It's great for brain training\nand everyday math like shopping!")
-                .font(.custom("Papyrus", size: 50))
-                .multilineTextAlignment(.center)
-                .opacity(showText2 ? 1 : 0)
-                .offset(y: showText2 ? 0 : -20)
-            
-            // 3段落目
-            Text("This app is designed based on\nthe concept of Flash Anzan.")
-                .font(.custom("Papyrus", size: 50))
-                .multilineTextAlignment(.center)
-                .opacity(showText3 ? 1 : 0)
-                .offset(y: showText3 ? 0 : -20)
-            
-      
-            Image("rabbit")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: 120)
-                .opacity(showImage ? 1 : 0)
-                .offset(y: showImage ? 0 : -20)
-                .padding(.top, 10)
-            
-            Spacer()
-            
-            // 矢印（次がある場合）
-            if showNextArrow {
-                VStack {
-                    Text("slide to next")
-                        .font(.custom("Papyrus", size: 16))
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 30))
-                        .offset(y: showArrow ? 0 : -10)
-                        .animation(.easeInOut(duration: 0.8).repeatForever(), value: showArrow)
+            VStack(spacing: h * 0.04) { // ★ 隙間も画面の高さに比例させる
+                Spacer()
+                
+                // 1段落目
+                Text("Imagine an abacus in your head\nand move the beads to calculate.")
+                    .font(.custom("Papyrus", size: w * (isPad ? 0.045 : 0.06))) // ★ 画面幅から計算
+                    .minimumScaleFactor(0.5) // ★ 入りきらない場合は50%まで自動縮小
+                    .multilineTextAlignment(.center)
+                    .opacity(showText1 ? 1 : 0)
+                    .offset(y: showText1 ? 0 : -20)
+                
+                // 2段落目
+                Text("It's great for brain training\nand everyday math like shopping!")
+                    .font(.custom("Papyrus", size: w * (isPad ? 0.045 : 0.06)))
+                    .minimumScaleFactor(0.5)
+                    .multilineTextAlignment(.center)
+                    .opacity(showText2 ? 1 : 0)
+                    .offset(y: showText2 ? 0 : -20)
+                
+                // 3段落目
+                Text("This app is designed based on\nthe concept of Flash Anzan.")
+                    .font(.custom("Papyrus", size: w * (isPad ? 0.045 : 0.06)))
+                    .minimumScaleFactor(0.5)
+                    .multilineTextAlignment(.center)
+                    .opacity(showText3 ? 1 : 0)
+                    .offset(y: showText3 ? 0 : -20)
+                
+                Image("rabbit")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: w * (isPad ? 0.15 : 0.25)) // ★ 画像も画面幅から計算
+                    .opacity(showImage ? 1 : 0)
+                    .offset(y: showImage ? 0 : -20)
+                    .padding(.top, h * 0.01)
+                
+                Spacer()
+                
+                // 矢印（次がある場合）
+                if showNextArrow {
+                    VStack {
+                        Text("slide to next")
+                            .font(.custom("Papyrus", size: w * 0.04))
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: w * 0.08))
+                            .offset(y: showArrow ? 0 : -10)
+                            .animation(.easeInOut(duration: 0.8).repeatForever(), value: showArrow)
+                    }
+                    .opacity(showArrow ? 1 : 0)
+                    .padding(.bottom, h * 0.05)
+                } else {
+                    Spacer().frame(height: h * 0.1)
                 }
-                .opacity(showArrow ? 1 : 0)
-                .padding(.bottom, 50)
-            } else {
-                Spacer().frame(height: 80)
             }
-        }
-        .padding(.horizontal, 20)
-        .onAppear {
-            triggerAnimations()
+            .padding(.horizontal, w * 0.05)
+            .frame(width: w, height: h) // ★ 画面全体の中央に配置するため
+            .onAppear {
+                triggerAnimations()
+            }
         }
     }
     

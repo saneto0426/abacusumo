@@ -97,7 +97,7 @@ struct ProblemSelectView: View {
             Button(action: {
                 if selectedDigit != nil {
                     // 口数選びの画面なら、桁数選びに戻る
-                    SoundManager.instance.playSound(name: "tap") // または backSound
+                    SoundManager.instance.playSound(name: "backSound", ext: "mp3") // または backSound
                     selectedDigit = nil
                 } else {
                     // 桁数選びの画面なら、前の画面（タイトルなど）に戻る
