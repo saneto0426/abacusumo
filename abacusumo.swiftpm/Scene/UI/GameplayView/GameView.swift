@@ -206,6 +206,7 @@ struct GameView: View {
             
             if ghostToBeat == nil {
                 gameState -= 0.001
+                
             } else {
                 if nextGhostIndex < ghostSolveTimestamps.count {
                     if totalPlayTime >= ghostSolveTimestamps[nextGhostIndex] {
