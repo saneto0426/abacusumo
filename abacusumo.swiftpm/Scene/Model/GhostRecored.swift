@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-@Model // これだけで保存可能になる
+@Model 
 class GhostRecord {
     @Attribute(.unique) var id: UUID // 重複保存を防止
     var mode: GameMode

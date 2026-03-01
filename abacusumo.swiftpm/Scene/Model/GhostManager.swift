@@ -19,11 +19,11 @@ class GhostManager: ObservableObject {
         self.modelContext = modelContext
     }
 
-    /// 記録を保存する（★制限をなくしました）
+    /// 記録を保存する
     func saveRecord(_ record: GhostRecord) {
-        modelContext.insert(record) // データベースに追加するだけ！
+        modelContext.insert(record) // データベースに追加
     }
     
-    // ※ limitRecords(for:) メソッドは丸ごと削除してOKです
+
 }   
 

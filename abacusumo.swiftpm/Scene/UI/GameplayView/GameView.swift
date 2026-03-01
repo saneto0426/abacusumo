@@ -121,7 +121,7 @@ struct GameView: View {
                 return // Sボタンの処理が終わったらここで抜ける
             }
             
-            // 回答モード（isAnswering）じゃない時は、ここで無視して終了！
+        
             if !isAnswering { return }
 
             // 数字とCボタンの処理
@@ -145,7 +145,7 @@ struct GameView: View {
         showEmptyWarning = false
         lastProblemStartTime = Date()
         
-        // マリカ方式の初期化
+
         totalPlayTime = 0
         ghostSolveTimestamps = []
         nextGhostIndex = 0
@@ -189,7 +189,7 @@ struct GameView: View {
             if gameState > 0.80 {
                 isGameOver = true
                 currentDisplayText = "WIN!"
-                // ★勝った時の音を鳴らす！
+                // ★勝った時の音を鳴らす
                 SoundManager.instance.playSound(name: "kozuzumi", ext: "mp3")
                 showNameInput = true
                 return // ここで終了して、次の問題には進まない
@@ -205,7 +205,7 @@ struct GameView: View {
             totalPlayTime += 0.05
             
             if ghostToBeat == nil {
-                gameState -= 0.0005
+                gameState -= 0.001
             } else {
                 if nextGhostIndex < ghostSolveTimestamps.count {
                     if totalPlayTime >= ghostSolveTimestamps[nextGhostIndex] {

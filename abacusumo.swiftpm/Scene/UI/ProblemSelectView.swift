@@ -11,6 +11,9 @@ struct ProblemSelectView: View {
     var onSelect: (LevelConfig) -> Void
     var onBack: () -> Void
 
+    // ★追加：選んだ「桁数」を一時的に記憶する変数
+    @State private var selectedDigit: Int? = nil
+
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
     }
@@ -40,7 +43,8 @@ struct ProblemSelectView: View {
                                 .resizable()
                                 .frame(width: baseW * 0.5, height: baseW * 0.15)
                             
-                            Text("SELECT LEVEL")
+                            // ★変更：状態によってタイトルを切り替えるとおしゃれ！
+                            Text(selectedDigit == nil ? "SELECT DIGITS" : "SELECT NUMS")
                                 .font(.custom("Papyrus", size: baseW * 0.045))
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
@@ -48,14 +52,29 @@ struct ProblemSelectView: View {
                         }
                         .padding(.top, h * 0.02)
                         
-                        // --- スクロールする問題選択ボタン部分 ---
+                        // --- 問題選択ボタン部分 ---
                         ScrollView(.vertical, showsIndicators: false) {
                             VStack(spacing: baseW * 0.04) {
-                                ForEach(1...4, id: \.self) { d in
-                                    levelButton(label: "\(d) DIGITS (5 NUMS)", baseW: baseW) {
-                                        onSelect(LevelConfig(mode: .addition, digits: d, count: 5))
+                                
+                                if let d = selectedDigit {
+                                    // 【ステップ2】桁数が選ばれている時は「口数」を表示
+                                    let counts = [3, 5, 7]
+                                    ForEach(counts, id: \.self) { c in
+                                        levelButton(label: "\(c) NUMS", baseW: baseW) {
+                                            // ここで最終決定！GameViewへ進む
+                                            onSelect(LevelConfig(mode: .addition, digits: d, count: c))
+                                        }
+                                    }
+                                } else {
+                                    // 【ステップ1】まだ選ばれていない時は「桁数」を表示
+                                    ForEach(1...4, id: \.self) { d in
+                                        levelButton(label: "\(d) DIGITS", baseW: baseW) {
+                                            // 桁数を記憶してステップ2へ
+                                            selectedDigit = d
+                                        }
                                     }
                                 }
+                                
                             }
                             .padding(.bottom, h * 0.1)
                             .padding(.top, baseW * 0.02)
@@ -73,10 +92,18 @@ struct ProblemSelectView: View {
                 }
             }
         }
-        // ★修正ポイント：ここの戻るボタンから `tap` 音を削除しました！
-        // （ContentView側で backSound が鳴るため）
         .overlay(alignment: .topLeading) {
-            Button(action: onBack) {
+            // ★変更：戻るボタンの挙動を2段階に対応させる
+            Button(action: {
+                if selectedDigit != nil {
+                    // 口数選びの画面なら、桁数選びに戻る
+                    SoundManager.instance.playSound(name: "tap") // または backSound
+                    selectedDigit = nil
+                } else {
+                    // 桁数選びの画面なら、前の画面（タイトルなど）に戻る
+                    onBack()
+                }
+            }) {
                 Image("back")
                     .resizable().scaledToFit()
                     .frame(width: isPad ? 45 : 30)
@@ -90,7 +117,7 @@ struct ProblemSelectView: View {
     // 選択肢のボタン
     func levelButton(label: String, baseW: CGFloat, action: @escaping () -> Void) -> some View {
         Button(action: {
-            SoundManager.instance.playSound(name: "tap") // ★こっちのレベル選択の音は残しています
+            SoundManager.instance.playSound(name: "tap")
             action()
         }) {
             ZStack {
