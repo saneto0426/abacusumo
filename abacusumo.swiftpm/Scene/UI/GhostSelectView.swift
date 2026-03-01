@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import SwiftData // ★これを忘れずに！
+import SwiftData
 
 struct GhostSelectView: View {
     @Query(sort: \GhostRecord.date, order: .reverse) private var allRecords: [GhostRecord]
@@ -23,8 +23,8 @@ struct GhostSelectView: View {
     @State private var sortOption: RecordSortOption = .newest
     private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
     
-    // フィルタリングした結果を計算プロパティにするとスッキリします
-    // ★ 2. フィルタリング後に、選択された条件でソートする
+
+    // フィルタリング後に、選択された条件でソートする
     private var filteredRecords: [GhostRecord] {
         let baseRecords = allRecords.filter { $0.mode == mode }
             
@@ -105,7 +105,7 @@ struct GhostSelectView: View {
                                 .padding(.leading, 20)
                             }
                             .overlay(alignment: .topTrailing) {
-                                // ★ ソートボタンのサイズ設定
+                                // ソートボタンのサイズ設定
                                 let btnW: CGFloat = isPad ? 120 : 100 // 横幅
                                 let btnH: CGFloat = isPad ? 40 : 30   // 高さ
 
@@ -201,7 +201,7 @@ struct GhostSelectView: View {
         
     }
 
-    // --- 以下、ボタンやデザインの関数 ---
+
     
     private func ghostRecordButton(_ record: GhostRecord, screenWidth: CGFloat) -> some View {
             // ★ 2. HStackで囲んで、右側にゴミ箱ボタンを配置
@@ -221,7 +221,8 @@ struct GhostSelectView: View {
                             .frame(height: screenWidth > 600 ? 110 : 80)
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("\(record.playerName) の記録")
+                                // ★ 日本語だった箇所を英語に修正！
+                                Text("\(record.playerName)'s Record")
                                     .font(.custom("Papyrus", size: screenWidth > 600 ? 16 : 12))
                                     .foregroundColor(.black)
                                 
@@ -257,12 +258,13 @@ struct GhostSelectView: View {
  
 
     func recoverConfig(from record: GhostRecord) -> LevelConfig {
-            // ラベルから数字だけを取り出す
-            let digits = record.configLabel.compactMap { Int(String($0)) }
-            
-            // 修正点: digitsRight: ... の部分を削除しました
-            // mode と digits だけ渡せばOKです
-            return LevelConfig(mode: mode, digits: digits.first ?? 1)
-        }
+        
+        let extractedNumbers = record.configLabel.compactMap { Int(String($0)) }
+        
+        let d = extractedNumbers.first ?? 1
+        let c = extractedNumbers.count > 1 ? extractedNumbers[1] : 5 
+        
+        return LevelConfig(mode: mode, digits: d, count: c)
+    }
     
 }

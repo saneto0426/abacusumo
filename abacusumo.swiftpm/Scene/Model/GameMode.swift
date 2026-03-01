@@ -16,17 +16,13 @@ enum GameMode: String, Codable, CaseIterable {
 struct LevelConfig: Equatable {
     var mode: GameMode
     var digits: Int        // 左側の桁数（見取りの桁数）
-    //    var digitsRight: Int = 1 // 右側の桁数（掛ける数・割る数）
     var count: Int = 5       // 見取りの口数
     var allowSubtraction: Bool = true
     
     var label: String {
-        // switch文も不要になり、シンプルになります
-        return "\(digits)digits, \(count)count"
+        // ★UI（ProblemSelectView）の表示と合わせる
+        return "\(digits) DIGITS (\(count) NUMS)"
     }
-    
-    
-    
 }
 
 
